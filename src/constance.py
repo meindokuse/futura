@@ -1,0 +1,4 @@
+
+PLACE_1 = 1
+PLACE_2 = 2
+PLACE_3 = 3
