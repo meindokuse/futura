@@ -9,8 +9,8 @@ from src.schemas.items import EmployerInWorkDayCreate
 class WorkService:
     async def get_list_employers_to_work(self, uow: IUnitOfWork, work_day: datetime.date):
         async with uow:
-            a = 1
-            # TO DO
+            res = await uow.work_day.get_employers_by_date(work_day)
+            return res
 
     async def change_status_work(self, uow: IUnitOfWork, status_work: int, fio: Optional[str] = None,
                                  id: Optional[int] = None):

@@ -3,14 +3,14 @@ from datetime import datetime, date
 from sqlalchemy import Integer, String, JSON, Date, DateTime, ForeignKey, Time
 from sqlalchemy.orm import mapped_column, Mapped, relationship
 
-from src.models.peoples import Employer
 from src.schemas.items import EventRead, ProductSchemaRead, EmployerInWorkDayRead
 from src.db.database import Base
+from src.schemas.peoples import EmployerRead
 
 
 class Product(Base):
     __tablename__ = 'products'
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, auto_increment=True)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String, nullable=False)
     type_product: Mapped[str] = mapped_column(String, nullable=False)
     description: Mapped[str] = mapped_column(String, nullable=False)
@@ -28,7 +28,7 @@ class Product(Base):
 
 class Events(Base):
     __tablename__ = 'events'
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, auto_increment=True)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String, nullable=False)
     day: Mapped[date] = mapped_column(Date, nullable=False, default=date.today)
     start: Mapped[datetime] = mapped_column(Time, nullable=False)
@@ -47,12 +47,12 @@ class Events(Base):
 class EmployerInWorkDay(Base):
     __tablename__ = 'employer_in_work_day'
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, auto_increment=True)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     work_time: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     employer_id: Mapped[int] = mapped_column(Integer, ForeignKey('employer.id'), nullable=False)
     status: Mapped[int] = mapped_column(Integer, nullable=False)
 
-    employer: Mapped["Employer"] = relationship("Employer", back_populates="work_days")
+    employer: Mapped["EmployerRead"] = relationship("Employer", back_populates="work_days")
 
     def to_read_model(self) -> "EmployerInWorkDayRead":
         return EmployerInWorkDayRead(

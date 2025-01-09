@@ -1,4 +1,6 @@
-from pydantic import BaseModel
+from typing import List, Optional
+
+from pydantic import BaseModel, EmailStr, Field
 
 
 class ResidentCreate(BaseModel):
@@ -15,18 +17,25 @@ class ResidentRead(BaseModel):
 
 
 class EmployerCreate(BaseModel):
-    image: str
+    email: str
     fio: str
     work_type: str
-    contacts: str
-    description: str
+    roles: List[str]
+    is_active: bool = True
+    image: Optional[str] = None
+    contacts: Optional[List[str]] = None
+    description: Optional[str] = None
+    hashed_password: str
 
 
 class EmployerRead(BaseModel):
     id: int
-    image: str
+    email: str
     fio: str
     work_type: str
-    contacts: str
-    description: str
-    work_days: list
+    roles: List[str]
+    is_active: bool = True
+    image: Optional[str] = None
+    contacts: Optional[List[str]] = None
+    description: Optional[str] = None
+
