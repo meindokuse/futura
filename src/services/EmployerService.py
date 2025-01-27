@@ -1,21 +1,35 @@
-
+from typing import Optional
 
 from fastapi import HTTPException
 
 from src.data.unitofwork import IUnitOfWork
-from src.schemas.peoples import EmployerCreate
+from src.schemas.peoples import EmployerCreate, EmployerRead
 from src.utils.jwt_tokens import bcrypt_context
 
 
 class EmployerService:
-    async def get_list_employer(self, uow: IUnitOfWork, page: int, limit: int):
-        async with uow:
-            list_residents = await uow.residents.find_all(page=page, limit=limit)
-            return list_residents
 
-    async def get_current_employer(self, uow: IUnitOfWork, fio: str):
+    async def get_list_employers(
+            self,
+            uow: IUnitOfWork,
+            page: int,
+            limit: int,
+            sort_by: str = "fio",
+            sort_order: str = "asc",
+            filter_by: Optional[dict] = None,
+    ):
         async with uow:
-            employer = await uow.employers.find_one(fio=fio)
+            list_employers = await uow.employers.get_employees(
+                page=page,
+                limit=limit,
+                sort_by=sort_by,
+                sort_order=sort_order,
+                filter_by=filter_by or {},
+            )
+            return list_employers
+    async def get_current_employer(self, uow: IUnitOfWork, id: int):
+        async with uow:
+            employer = await uow.employers.find_one(id=id)
         return employer
 
     async def authenticate(self, uow: IUnitOfWork, email: str, password: str):
@@ -26,15 +40,6 @@ class EmployerService:
             if not bcrypt_context.verify(password, employer.password):
                 return False
             return employer
-
-    # async def get_list_work_days_for_current_employer(self, uow: IUnitOfWork, fio: Optional[str] = None):
-    #     async with uow:
-    #         if fio is None:
-    #             employer = await uow.employers.find_one(id=id)
-    #         else:
-    #             employer = await get_current_user(uow)
-    #
-    #         return employer.work_days
 
     # ДЛЯ АДМИНА
     async def add_employer(self, uow: IUnitOfWork, employer: EmployerCreate):
@@ -69,6 +74,11 @@ class EmployerService:
             await uow.employers.add_one(data)
             await uow.commit()
 
+    async def edit_employer(self, uow: IUnitOfWork, new_data: EmployerRead, id: int):
+        new_data_dict = new_data.model_dump()
+        async with uow:
+            await uow.employers.edit_one(id=id, data=new_data_dict)
 
-
-
+    async def delete_employer(self, uow: IUnitOfWork, id: int):
+        async with uow:
+            await uow.employers.delete_one(id=id)

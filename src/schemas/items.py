@@ -2,16 +2,14 @@ from datetime import datetime, date
 
 from pydantic import BaseModel
 
-from src.schemas.peoples import EmployerRead
 
-
-class ProductSchemaCreate(BaseModel):
+class ProductCreate(BaseModel):
     name: str
     description: str
     components: dict
 
 
-class ProductSchemaRead(BaseModel):
+class ProductRead(BaseModel):
     name: str
     description: str
     type_product: str
@@ -32,14 +30,19 @@ class EventRead(BaseModel):
     description: str
 
 
-class EmployerInWorkDayRead(BaseModel):
+class WorkDayRead(BaseModel):
     id: int
     work_time: datetime
+    employer_fio: str
     status: int
-    employer: EmployerRead
 
+class LocationCreate(BaseModel):
+    address: str
+    description: str
+    image: str
 
-class EmployerInWorkDayCreate(BaseModel):
-    work_time: datetime
-    status: int
-    employer: EmployerRead
+class LocationRead(BaseModel):
+    id: int
+    address: str
+    description: str
+    image: str

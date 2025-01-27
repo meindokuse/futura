@@ -20,8 +20,6 @@ class Token(BaseModel):
     token_type: str
 
 
-
-
 async def get_current_user(token: Annotated[str, Depends(oauth2_bearer)]):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
@@ -42,11 +40,19 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_bearer)]):
             detail="Could not validate user."
         )
 
+
 user_dep = Annotated[dict, Depends(get_current_user)]
 
 
-def create_access_token(fio: str, roles: str, expires_delta: timedelta):
-    encode = {'sub': fio, 'roles': roles}
+def create_access_token(id: int, roles: str, fio: str, expires_delta: timedelta):
+    encode = {'sub': id, 'roles': roles, 'fio': fio}
     expires = datetime.utcnow() + expires_delta
     encode.update({'exp': expires})
     return jwt.encode(encode, SECRET_KEY, algorithm=ALGORITHM)
+
+
+def create_refresh_token(fio: str, roles: str, expires_delta: timedelta):
+    to_encode = {'sub': fio, 'roles': roles}
+    expire = datetime.utcnow() + expires_delta
+    to_encode.update({"exp": expire})
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)

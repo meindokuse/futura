@@ -1,4 +1,5 @@
 from src.data.unitofwork import IUnitOfWork
+from src.schemas.peoples import ResidentCreate
 
 
 class ResidentsService:
@@ -13,6 +14,11 @@ class ResidentsService:
             return resident
 
     # ДЛЯ АДМИНА
-    async def add_resident(self, uow: IUnitOfWork, resident: dict):
+    async def add_resident(self, uow: IUnitOfWork, resident: ResidentCreate):
+        dict_resident = resident.model_dump()
         async with uow:
-            await uow.residents.add_one(resident)
+            await uow.residents.add_one(data=dict_resident)
+
+    async def delete_resident(self, uow: IUnitOfWork, fio: str):
+        async with uow:
+            await uow.residents.delete_one(fio=fio)

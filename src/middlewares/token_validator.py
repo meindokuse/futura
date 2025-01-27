@@ -1,4 +1,3 @@
-
 from src.utils.jwt_tokens import SECRET_KEY, ALGORITHM
 
 from fastapi import Request, HTTPException

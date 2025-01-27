@@ -1,18 +1,11 @@
 from typing import Optional
 
-from pygments.lexer import default
-from sqlalchemy import Column, String, Integer, Date, Boolean, JSON, ForeignKey, DateTime
-from sqlalchemy.orm import relationship, Mapped, mapped_column
-
-from src.db.database import Base
-from datetime import date, datetime
-
-from src.schemas.items import EmployerInWorkDayRead
-from src.schemas.peoples import EmployerRead, ResidentRead
-
+from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.types import Integer, String, Boolean, JSON
-from passlib.context import CryptContext
+
+from src.db.database import Base
+from src.schemas.peoples import EmployerRead, ResidentRead
 
 
 class Employer(Base):
@@ -22,29 +15,27 @@ class Employer(Base):
     email: Mapped[str] = mapped_column(String, unique=True, nullable=False)
     hashed_password: Mapped[str] = mapped_column(String, nullable=False)
     roles: Mapped[list[str]] = mapped_column(JSON, default=["employee"])
-    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    # is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     image: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     fio: Mapped[str] = mapped_column(String, nullable=False)
     work_type: Mapped[str] = mapped_column(String, nullable=False)
     contacts: Mapped[Optional[list[str]]] = mapped_column(JSON, nullable=True)
     description: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    location_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=False)
 
-    work_days: Mapped[list["EmployerInWorkDayRead"]] = relationship("EmployerInWorkDay", back_populates="employer")
 
     def to_read_model(self) -> "EmployerRead":
         return EmployerRead(
             id=self.id,
+            password=self.hashed_password,
             email=self.email,
             fio=self.fio,
             roles=self.roles,
-            is_active=self.is_active,
             image=self.image,
             work_type=self.work_type,
             contacts=self.contacts,
             description=self.description,
-            work_days=self.work_days
         )
-
 
 class Residents(Base):
     __tablename__ = 'residents'

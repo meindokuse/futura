@@ -3,13 +3,24 @@ from typing import Optional
 
 from src.data.unitofwork import IUnitOfWork
 
-from src.schemas.items import EmployerInWorkDayCreate
+from src.schemas.work_day import WorkDayCreate
 
 
 class WorkService:
-    async def get_list_employers_to_work(self, uow: IUnitOfWork, work_day: datetime.date):
+
+    async def get_list_workdays(self,uow: IUnitOfWork, page: int, limit: int):
         async with uow:
-            res = await uow.work_day.get_employers_by_date(work_day)
+            res = await uow.work_day.find_all(page=page, limit=limit)
+            return res
+
+    async def get_list_workdays_for_current_employer(self, uow: IUnitOfWork, fio: str, page: int, limit: int):
+        async with uow:
+            res = await uow.work_day.find_all(page=page, limit=limit, employer_fio=fio)
+            return res
+
+    async def get_list_workdays_for_current_day(self, uow: IUnitOfWork, work_day: datetime.date,page: int, limit: int):
+        async with uow:
+            res = await uow.work_day.get_workdays_by_date(work_day,page,limit)
             return res
 
     async def change_status_work(self, uow: IUnitOfWork, status_work: int, fio: Optional[str] = None,
@@ -22,7 +33,12 @@ class WorkService:
                 id = employer.id
                 await uow.work_day.edit_one(id=id, data={"status": status_work})
 
-    async def add_employers_to_work(self, uow: IUnitOfWork, employer_in_work: EmployerInWorkDayCreate):
+    async def add_employers_to_work(self, uow: IUnitOfWork, employer_in_work: WorkDayCreate):
         data = employer_in_work.model_dump()
         async with uow:
             await uow.work_day.add_one(data)
+
+    async def delete_work_day(self, uow: IUnitOfWork, fio: str):
+        async with uow:
+            await uow.work_day.delete_one(fio=fio)
+
