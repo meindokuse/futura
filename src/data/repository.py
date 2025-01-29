@@ -28,9 +28,13 @@ class SQLAlchemyRepository(AbstractRepository):
         return res
 
     async def add_one(self, data: dict) -> int:
-        stmt = insert(self.model).values(**data).returning(self.model.id)
-        res = await self.session.execute(stmt)
-        return res.scalar_one()
+        try:
+            stmt = insert(self.model).values(**data).returning(self.model.id)
+            res = await self.session.execute(stmt)
+            return res.scalar_one()
+        except Exception as e:
+            print(f"Error during insert: {e}")
+            raise
 
     async def edit_one(self, id: int, data: dict) -> int:
         stmt = update(self.model).values(**data).filter_by(id=id).returning(self.model.id)

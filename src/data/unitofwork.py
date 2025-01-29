@@ -3,6 +3,7 @@ from typing import Type
 
 from src.db.database import async_session_maker
 from src.repositories.items.event_repository import EventRepository
+from src.repositories.items.location_repository import LocationRepository
 from src.repositories.items.product_repository import ProductRepository
 from src.repositories.peoples.employer_repository import EmployerRepository
 from src.repositories.peoples.residents_repository import ResidentsRepository
@@ -17,6 +18,7 @@ class IUnitOfWork(ABC):
     work_day: Type[WorkRepository]
     product: Type[ProductRepository]
     event: Type[EventRepository]
+    location: Type[LocationRepository]
 
     @abstractmethod
     def __init__(self):
@@ -49,6 +51,9 @@ class UnitOfWork:
         self.residents = ResidentsRepository(self.session)
         self.employers = EmployerRepository(self.session)
         self.work_day = WorkRepository(self.session)
+        self.product = ProductRepository(self.session)
+        self.event = EventRepository(self.session)
+        self.location = LocationRepository(self.session)
 
     async def __aexit__(self, *args):
         await self.rollback()

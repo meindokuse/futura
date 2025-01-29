@@ -1,6 +1,8 @@
 from datetime import datetime
 from typing import Optional
 
+from fastapi import HTTPException
+
 from src.data.unitofwork import IUnitOfWork
 
 from src.schemas.work_day import WorkDayCreate
@@ -34,11 +36,16 @@ class WorkService:
                 await uow.work_day.edit_one(id=id, data={"status": status_work})
 
     async def add_employers_to_work(self, uow: IUnitOfWork, employer_in_work: WorkDayCreate):
+        if employer_in_work.work_time.tzinfo is not None:
+            employer_in_work.work_time = employer_in_work.work_time.replace(tzinfo=None)
+            raise HTTPException(status_code=500)
         data = employer_in_work.model_dump()
         async with uow:
             await uow.work_day.add_one(data)
+            await uow.commit()
 
     async def delete_work_day(self, uow: IUnitOfWork, fio: str):
         async with uow:
             await uow.work_day.delete_one(fio=fio)
+            await uow.commit()
 

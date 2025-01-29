@@ -63,7 +63,6 @@ class EmployerService:
                 "fio": employer.fio,
                 "work_type": employer.work_type,
                 "roles": employer.roles,  # JSON автоматически сериализуется
-                "is_active": employer.is_active,
                 "image": employer.image,
                 "contacts": employer.contacts,  # JSON автоматически сериализуется
                 "description": employer.description,
@@ -82,3 +81,4 @@ class EmployerService:
     async def delete_employer(self, uow: IUnitOfWork, id: int):
         async with uow:
             await uow.employers.delete_one(id=id)
+            await uow.commit()

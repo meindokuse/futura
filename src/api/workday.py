@@ -52,6 +52,7 @@ async def add_workday(
         workday: WorkDayCreate,
         uow: UOWDep
 ):
+    workday = workday.preprocess()
     workday_service = WorkService()
     await workday_service.add_employers_to_work(uow, workday)
 

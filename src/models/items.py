@@ -30,7 +30,7 @@ class Events(Base):
     __tablename__ = 'events'
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String, nullable=False)
-    day: Mapped[date] = mapped_column(Date, nullable=False, default=date.today)
+    day: Mapped[date] = mapped_column(DateTime, nullable=False, default=date.today)
     start: Mapped[datetime] = mapped_column(Time, nullable=False)
     description: Mapped[str] = mapped_column(String, nullable=False)
 
@@ -48,7 +48,7 @@ class WorkDay(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     work_time: Mapped[datetime] = mapped_column(DateTime, nullable=False)
-    employer_fio: Mapped[int] = mapped_column(Integer, nullable=False)
+    employer_fio: Mapped[str] = mapped_column(String, ForeignKey('employer.fio'), nullable=False)
     status: Mapped[int] = mapped_column(Integer, nullable=False)
 
     employer: Mapped["EmployerRead"] = relationship("Employer")
