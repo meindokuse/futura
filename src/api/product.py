@@ -1,6 +1,6 @@
 from typing import Optional
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Query
 
 from src.api.dependses import UOWDep
 from src.schemas.items import ProductCreate
@@ -22,7 +22,7 @@ async def add_product(uow: UOWDep, product: ProductCreate):
 
 
 @router.get('/get_list_products')
-async def get_list_products(uow: UOWDep, page: int, limit: int, type_product: Optional[str]):
+async def get_list_products(uow: UOWDep, page: int, limit: int, type_product: Optional[str] = Query(None)):
     product_service = ProductService()
 
     list_products = await product_service.get_list_products(uow=uow, page=page, limit=limit, type_product=type_product)

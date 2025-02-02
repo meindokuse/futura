@@ -15,10 +15,11 @@ async def get_list_residents(page: int, limit: int, uow: UOWDep):
     list_residents = await ResidentsService().get_list_residents(uow, page, limit)
     return list_residents
 
-@router.get('/get_resident')
-async def get_resident(fio: str, uow: UOWDep):
-    resident = await ResidentsService().get_current_resident(uow,fio)
-    return resident
+
+@router.get('/get_resident_by_fio')
+async def get_resident(page: int, limit: int, fio: str, uow: UOWDep):
+    residents = await ResidentsService().get_current_residents(uow, fio, page, limit)
+    return residents
 
 
 @router.post('/add_resident')
@@ -30,8 +31,8 @@ async def add_new_resident(resident: ResidentCreate, uow: UOWDep):
 
 
 @router.delete('/delete_resident')
-async def delete_resident(fio: str, uow: UOWDep):
-    await ResidentsService().delete_resident(uow, fio)
+async def delete_resident(id: int, uow: UOWDep):
+    await ResidentsService().delete_resident(uow, id)
     return {
         "status": "ok",
     }

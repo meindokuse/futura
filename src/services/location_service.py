@@ -10,7 +10,7 @@ class LocationService:
             return list_locations
 
     async def add_location(self, uow: IUnitOfWork, location: LocationCreate):
+        data = location.model_dump()
         async with uow:
-            await uow.location.add_one(data = location)
-
-
+            await uow.location.add_one(data=data)
+            await uow.commit()

@@ -8,17 +8,19 @@ class ResidentsService:
             list_residents = await uow.residents.find_all(page=page, limit=limit)
             return list_residents
 
-    async def get_current_resident(self, uow: IUnitOfWork, fio: str):
+    async def get_current_residents(self, uow: IUnitOfWork, fio: str, page: int, limit: int):
         async with uow:
-            resident = await uow.residents.find_one(fio=fio)
-            return resident
+            residents = await uow.residents.find_with_filter(page=page, limit=limit, fio=fio)
+            return residents
 
     # ДЛЯ АДМИНА
     async def add_resident(self, uow: IUnitOfWork, resident: ResidentCreate):
         dict_resident = resident.model_dump()
         async with uow:
             await uow.residents.add_one(data=dict_resident)
+            await uow.commit()
 
-    async def delete_resident(self, uow: IUnitOfWork, fio: str):
+    async def delete_resident(self, uow: IUnitOfWork, id: int):
         async with uow:
-            await uow.residents.delete_one(fio=fio)
+            await uow.residents.delete_one(id=id)
+            await uow.commit()

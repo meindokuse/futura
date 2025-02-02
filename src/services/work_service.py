@@ -12,7 +12,7 @@ class WorkService:
 
     async def get_list_workdays(self,uow: IUnitOfWork, page: int, limit: int):
         async with uow:
-            res = await uow.work_day.find_all(page=page, limit=limit)
+            res = await uow.work_day.get_workdays(page=page, limit=limit)
             return res
 
     async def get_list_workdays_for_current_employer(self, uow: IUnitOfWork, fio: str, page: int, limit: int):

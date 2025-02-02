@@ -30,21 +30,20 @@ class Events(Base):
     __tablename__ = 'events'
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String, nullable=False)
-    day: Mapped[date] = mapped_column(DateTime, nullable=False, default=date.today)
-    start: Mapped[datetime] = mapped_column(Time, nullable=False)
+    date_start: Mapped[date] = mapped_column(DateTime, nullable=False, default=date.today)
     description: Mapped[str] = mapped_column(String, nullable=False)
 
     def to_read_model(self) -> "EventRead":
         return EventRead(
             id=self.id,
             name=self.name,
-            start=self.start,
+            date_start=self.date_start,
             description=self.description
         )
 
 
 class WorkDay(Base):
-    __tablename__ = 'employer_in_work_day'
+    __tablename__ = 'workdays'
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     work_time: Mapped[datetime] = mapped_column(DateTime, nullable=False)
@@ -65,6 +64,7 @@ class WorkDay(Base):
 class Location(Base):
     __tablename__ = 'location'
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    name: Mapped[str] = mapped_column(String, nullable=False)
     address: Mapped[str] = mapped_column(String, nullable=False)
     description: Mapped[str] = mapped_column(String, nullable=False)
     image: Mapped[str] = mapped_column(String, nullable=False)

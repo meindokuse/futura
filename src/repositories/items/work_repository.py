@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime, timedelta
 
 from sqlalchemy import func, select
 
@@ -9,12 +9,18 @@ from src.models.items import WorkDay
 class WorkRepository(SQLAlchemyRepository):
     model = WorkDay
 
+
+
     async def get_workdays_by_date(self, target_date: date, page: int, limit: int):
         offset = (page - 1) * limit
 
+        # Создаем диапазон дат для фильтрации
+        start_datetime = datetime.combine(target_date, datetime.min.time())
+        end_datetime = start_datetime + timedelta(days=1)
+
         stmt = (
             select(WorkDay)
-            .where(func.date(WorkDay.work_time) == target_date)
+            .where(WorkDay.work_time >= start_datetime, WorkDay.work_time < end_datetime)
             .order_by(WorkDay.work_time.asc())
             .offset(offset)
             .limit(limit)

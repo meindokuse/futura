@@ -34,7 +34,7 @@ class EmployerRepository(SQLAlchemyRepository):
 
         start = (page - 1) * limit
 
-        stmt = select(self.model).filter_by(**filter_by).order_by(order_by)
+        stmt = select(self.model).where().order_by(order_by)
 
         stmt = stmt.offset(start).limit(limit)
 

@@ -6,10 +6,12 @@ from pydantic import BaseModel
 class ProductCreate(BaseModel):
     name: str
     description: str
+    type_product: str
     components: dict
 
 
 class ProductRead(BaseModel):
+    id:int
     name: str
     description: str
     type_product: str
@@ -18,15 +20,14 @@ class ProductRead(BaseModel):
 
 class EventCreate(BaseModel):
     name: str
-    start: datetime
+    date_start: datetime
     description: str
 
 
 class EventRead(BaseModel):
     id: int
     name: str
-    start: datetime
-    day: date
+    date_start: datetime
     description: str
 
 
@@ -37,12 +38,14 @@ class WorkDayRead(BaseModel):
     status: int
 
 class LocationCreate(BaseModel):
+    name:str
     address: str
     description: str
     image: str
 
 class LocationRead(BaseModel):
     id: int
+    name: str
     address: str
     description: str
     image: str

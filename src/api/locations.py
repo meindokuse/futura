@@ -14,18 +14,20 @@ router = APIRouter(
 async def get_locations(
         page: int,
         limit: int,
-        uow: UOWDep):
+        uow: UOWDep
+):
     location_service = LocationService()
     list_locations = await location_service.get_list_locations(uow, page, limit)
     return list_locations
 
-@router.get('/add_location')
+
+@router.post('/add_location')
 async def add_location(
-        location:LocationCreate
+        location: LocationCreate,
+        uow: UOWDep
 ):
     location_service = LocationService()
-    await location_service.add_location(location)
-    return location_service
-
-
-
+    await location_service.add_location(uow,location)
+    return {
+        'status': 'ok',
+    }
