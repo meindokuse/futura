@@ -18,18 +18,21 @@ router = APIRouter(
 
 @router.post('/token')
 async def login_for_get_token(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], uow: UOWDep):
-    user = await EmployerService().authenticate(uow, form_data.username, form_data.password)
-    if not user:
-        raise HTTPException(status_code=401, detail="Incorrect email or password")
-    token = create_access_token(user.id, user.roles, user.fio, timedelta(minutes=60))
+    try:
+        user = await EmployerService().authenticate(uow, form_data.username, form_data.password)
+        if not user:
+            raise HTTPException(status_code=401, detail="Incorrect email or password")
+        token = create_access_token(user.id, user.roles, user.fio, timedelta(minutes=60))
 
-    return {"access_token": token, "token_type": "bearer"}
+        return {"access_token": token, "token_type": "bearer"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get('/profile')
 async def get_profile(user: user_dep, uow: UOWDep):
-    user_data = await EmployerService().get_current_employer(uow, user.get('id'))
-    work_days = await WorkService().get_current_list_workdays(uow, user.get('id'), 1, 10)
+    user_data = await EmployerService().get_current_employer(uow, int(user.get('id')))
+    work_days = await WorkService().get_list_workdays_for_current_employer(uow, user.get('fio'), 1, 10)
     return {
         "user": user_data,
         "work_days": work_days

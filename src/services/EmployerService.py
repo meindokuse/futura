@@ -3,7 +3,7 @@ from typing import Optional
 from fastapi import HTTPException
 
 from src.data.unitofwork import IUnitOfWork
-from src.schemas.peoples import EmployerCreate, EmployerRead
+from src.schemas.peoples import EmployerCreate, EmployerRead, EmployerPut
 from src.utils.jwt_tokens import bcrypt_context
 
 
@@ -73,10 +73,11 @@ class EmployerService:
             await uow.employers.add_one(data)
             await uow.commit()
 
-    async def edit_employer(self, uow: IUnitOfWork, new_data: EmployerRead, id: int):
+    async def edit_employer(self, uow: IUnitOfWork, new_data: EmployerPut, id: int):
         new_data_dict = new_data.model_dump()
         async with uow:
             await uow.employers.edit_one(id=id, data=new_data_dict)
+            await uow.commit()
 
     async def delete_employer(self, uow: IUnitOfWork, id: int):
         async with uow:

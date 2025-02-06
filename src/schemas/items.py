@@ -10,6 +10,7 @@ class ProductCreate(BaseModel):
     components: dict
 
 
+
 class ProductRead(BaseModel):
     id:int
     name: str
@@ -41,11 +42,9 @@ class LocationCreate(BaseModel):
     name:str
     address: str
     description: str
-    image: str
 
 class LocationRead(BaseModel):
     id: int
     name: str
     address: str
     description: str
-    image: str

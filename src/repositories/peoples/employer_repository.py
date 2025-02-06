@@ -23,21 +23,44 @@ class EmployerRepository(SQLAlchemyRepository):
             self,
             page: int,  # Смещение для пагинации
             limit: int,  # Лимит записей на страницу
-            sort_by: str = "fio",  # Поле для сортировки (по умолчанию "name")
+            sort_by: str = "fio",  # Поле для сортировки (по умолчанию "fio")
             sort_order: str = "asc",  # Порядок сортировки ("asc" или "desc")
-            **filter_by,  # Фильтры в виде словаря
+            filter_by: dict = None,  # Фильтры в виде словаря
     ):
-        if sort_order.lower() == "desc":
-            order_by = getattr(self.model, sort_by).desc()
-        else:
-            order_by = getattr(self.model, sort_by).asc()
+        filter_by = filter_by or {}  # Если None, заменяем на пустой словарь
 
+        # Проверяем, что поле для сортировки существует
+        if not hasattr(self.model, sort_by):
+            raise AttributeError(f"Model {self.model.__name__} has no attribute '{sort_by}'.")
+
+        # Определяем порядок сортировки
+        order_by = getattr(self.model, sort_by).desc() if sort_order.lower() == "desc" else getattr(self.model,
+                                                                                                    sort_by).asc()
+
+        # Пагинация
         start = (page - 1) * limit
 
-        stmt = select(self.model).where().order_by(order_by)
+        # Генерируем список фильтров (игнорируя несуществующие поля)
+        filters = [
+            getattr(self.model, key) == value
+            for key, value in filter_by.items()
+            if hasattr(self.model, key)
+        ]
 
-        stmt = stmt.offset(start).limit(limit)
+        # Формируем запрос с использованием where() и применяем фильтры
+        stmt = (
+            select(self.model)
+            .where(*filters)
+            .order_by(order_by)
+            .offset(start)
+            .limit(limit)
+        )
 
+        # Выполняем запрос
         res = await self.session.execute(stmt)
         res = [row[0].to_read_model() for row in res.all()]
         return res
+
+
+
+

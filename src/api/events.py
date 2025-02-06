@@ -7,6 +7,7 @@ from datetime import date
 from src.schemas.items import EventCreate
 from src.services.event_service import EventService
 from src.utils.notify import send_message_to_bot
+import asyncio
 
 router = APIRouter(
     tags=['events'],
@@ -46,7 +47,11 @@ async def get_events_by_date(
     events_service = EventService()
     events = await events_service.get_event_list_by_date(uow, page, limit, target_date)
     return events
-
+@router.get('/get_latest')
+async def get_latest(uow:UOWDep):
+    events_service = EventService()
+    event = await events_service.get_latest_event(uow)
+    return event
 
 @router.post("/create_event")
 async def create_event(
@@ -58,10 +63,10 @@ async def create_event(
     if id:
         start = event.date_start.strftime("%d/%m/%Y, %H:%M")
         text = f'Анонсировано новое событие!\n{event.name}\nНачало: {start}\nПолная информация на нашем сайте.'
-        status = await send_message_to_bot(text)
+        asyncio.create_task(send_message_to_bot(text))
+
     return {
         "status": "success",
-        'status_notify': 'success',
     }
 
 

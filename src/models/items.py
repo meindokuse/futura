@@ -67,12 +67,11 @@ class Location(Base):
     name: Mapped[str] = mapped_column(String, nullable=False)
     address: Mapped[str] = mapped_column(String, nullable=False)
     description: Mapped[str] = mapped_column(String, nullable=False)
-    image: Mapped[str] = mapped_column(String, nullable=False)
 
     def to_read_model(self) -> "LocationRead":
         return LocationRead(
             id=self.id,
+            name=self.name,
             address=self.address,
             description=self.description,
-            image=self.image
         )

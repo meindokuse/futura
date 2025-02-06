@@ -23,7 +23,9 @@ class Token(BaseModel):
 async def get_current_user(token: Annotated[str, Depends(oauth2_bearer)]):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        fio: str = payload.get("sub")
+
+        fio: str = payload.get("fio")
+        id: str = payload.get("sub")
         roles: list = payload.get("roles")
 
         if fio is None or roles is None:
@@ -32,12 +34,11 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_bearer)]):
                 detail="Could not validate user."
             )
 
-        return {"fio": fio, "roles": roles}
-
+        return {"id": id, "roles": roles, 'fio': fio}
     except JWTError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Could not validate user."
+            detail="Could not validate user, with error"
         )
 
 
@@ -45,14 +46,13 @@ user_dep = Annotated[dict, Depends(get_current_user)]
 
 
 def create_access_token(id: int, roles: str, fio: str, expires_delta: timedelta):
-    encode = {'sub': id, 'roles': roles, 'fio': fio}
+    encode = {'sub': str(id), 'roles': roles, 'fio': fio}
     expires = datetime.utcnow() + expires_delta
     encode.update({'exp': expires})
     return jwt.encode(encode, SECRET_KEY, algorithm=ALGORITHM)
 
-
-def create_refresh_token(fio: str, roles: str, expires_delta: timedelta):
-    to_encode = {'sub': fio, 'roles': roles}
-    expire = datetime.utcnow() + expires_delta
-    to_encode.update({"exp": expire})
-    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+# def create_refresh_token(fio: str, roles: str, expires_delta: timedelta):
+#     to_encode = {'sub': fio, 'roles': roles}
+#     expire = datetime.utcnow() + expires_delta
+#     to_encode.update({"exp": expire})
+#     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)

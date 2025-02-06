@@ -3,7 +3,7 @@ from typing import Optional
 from fastapi import APIRouter
 
 from src.api.dependses import UOWDep
-from src.schemas.peoples import EmployerCreate, EmployerRead
+from src.schemas.peoples import EmployerCreate, EmployerRead, EmployerPut
 from src.services.EmployerService import EmployerService
 
 router = APIRouter(
@@ -41,7 +41,7 @@ async def list_employers(
     return employers
 
 
-@router.get("get_employer")
+@router.get("/get_employer")
 async def get_employer(uow: UOWDep, id: int):
     employer_service = EmployerService()
     employer = await employer_service.get_current_employer(uow, id)
@@ -49,7 +49,7 @@ async def get_employer(uow: UOWDep, id: int):
 
 
 @router.put('/edit_employer')
-async def edit_employer(employer_id: int, new_data: EmployerRead, uow: UOWDep):
+async def edit_employer(employer_id: int, new_data: EmployerPut, uow: UOWDep):
     await EmployerService().edit_employer(uow, new_data, employer_id)
     return {
         "status": "ok"

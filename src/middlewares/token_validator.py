@@ -2,7 +2,7 @@ from src.utils.jwt_tokens import SECRET_KEY, ALGORITHM
 
 from fastapi import Request, HTTPException
 from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.responses import RedirectResponse
+from starlette.responses import RedirectResponse, JSONResponse
 from jose import jwt, JWTError
 
 
@@ -26,12 +26,15 @@ class TokenValidationMiddleware(BaseHTTPMiddleware):
             fio: str = payload.get("sub")
 
             if fio is None:
-                raise HTTPException(
+                return JSONResponse(
                     status_code=401,
-                    detail="Could not validate user."
+                    content={"detail": "Unauthorized, please log in."}
                 )
 
         except JWTError:
-            return RedirectResponse(url="/auth/login", status_code=307)
+            return JSONResponse(
+                status_code=401,
+                content={"detail": "Unauthorized, please log in."}
+            )
 
         return await call_next(request)

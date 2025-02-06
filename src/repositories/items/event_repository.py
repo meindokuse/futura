@@ -47,6 +47,15 @@ class EventRepository(SQLAlchemyRepository):
         res_ready = [row[0].to_read_model() for row in result.all()]
         return res_ready
 
+    async def get_latest_event(self):
+        stmt = (
+            select(self.model)
+            .order_by(self.model.date_start.desc())  # Сортируем по дате в убывающем порядке
+            .limit(1)  # Берём только первую запись
+        )
+        result = await self.session.execute(stmt)
+        return result.scalars().first().to_read_model()
+
     async def get_events_by_date(self, target_date: date, page: int, limit: int):
         offset = (page - 1) * limit
 

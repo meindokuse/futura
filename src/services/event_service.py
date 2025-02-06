@@ -16,11 +16,15 @@ class EventService:
             list_events = await uow.event.get_events_actually(page=page, limit=limit)
             return list_events
 
-
     async def get_event_list_by_date(self, uow: IUnitOfWork, page: int, limit: int, date: datetime.date):
         async with uow:
             list_events = await uow.event.get_events_by_date(page=page, limit=limit, target_date=date)
             return list_events
+
+    async def get_latest_event(self, uow: IUnitOfWork):
+        async with uow:
+            event = await uow.event.get_latest_event()
+            return event
 
     async def add_event(self, uow: IUnitOfWork, event: EventCreate):
         data = event.model_dump()
