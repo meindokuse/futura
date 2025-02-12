@@ -12,20 +12,18 @@ router = APIRouter(
 )
 
 
-@router.get("/get_list_employers")
+@router.get("/get_list_employers/{location_name}")
 async def list_employers(
         uow: UOWDep,
+        location_name: str,
         page: int = 1,
         limit: int = 10,
         sort_by: str = "fio",
         sort_order: str = "asc",
-        location_id: Optional[int] = None,
         work_type: Optional[str] = None
 ):
-    filter_by = {}
+    filter_by = {"location_name": location_name}
 
-    if location_id:
-        filter_by["location_id"] = location_id
     if work_type:
         filter_by["work_type"] = work_type
 

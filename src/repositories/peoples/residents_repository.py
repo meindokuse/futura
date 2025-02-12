@@ -11,12 +11,13 @@ class ResidentsRepository(SQLAlchemyRepository):
             self,
             page: int,  # Смещение для пагинации
             limit: int,  # Лимит записей на страницу
-            fio: str  # ФИО для фильтрации
+            fio: str,  # ФИО для фильтрации
+            **fiter_kwargs
     ):
         start = (page - 1) * limit
 
         # Используем func.lower для приведения к lowercase
-        stmt = select(self.model).where(
+        stmt = select(self.model).filter_by(**fiter_kwargs).where(
             func.lower(self.model.fio).ilike(f"%{fio.lower()}%")
         )
 

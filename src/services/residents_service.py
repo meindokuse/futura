@@ -3,14 +3,15 @@ from src.schemas.peoples import ResidentCreate
 
 
 class ResidentsService:
-    async def get_list_residents(self, uow: IUnitOfWork, page: int, limit: int):
+    async def get_list_residents(self, uow: IUnitOfWork, page: int, limit: int, location_name: str):
         async with uow:
-            list_residents = await uow.residents.find_all(page=page, limit=limit)
+            list_residents = await uow.residents.find_all(page=page, limit=limit, location_name=location_name)
             return list_residents
 
-    async def get_current_residents(self, uow: IUnitOfWork, fio: str, page: int, limit: int):
+    async def get_current_residents(self, uow: IUnitOfWork, fio: str, page: int, limit: int, location_name: str):
         async with uow:
-            residents = await uow.residents.find_with_filter(page=page, limit=limit, fio=fio)
+            residents = await uow.residents.find_with_filter(page=page, limit=limit, fio=fio,
+                                                             location_name=location_name)
             return residents
 
     # ДЛЯ АДМИНА

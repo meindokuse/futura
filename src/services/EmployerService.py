@@ -63,10 +63,10 @@ class EmployerService:
                 "fio": employer.fio,
                 "work_type": employer.work_type,
                 "roles": employer.roles,  # JSON автоматически сериализуется
-                "image": employer.image,
                 "contacts": employer.contacts,  # JSON автоматически сериализуется
                 "description": employer.description,
                 "hashed_password": hash_password,
+                "location_name":employer.location_name,
             }
 
             # Добавляем данные в таблицу employer

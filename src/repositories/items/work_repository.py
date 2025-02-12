@@ -11,7 +11,7 @@ class WorkRepository(SQLAlchemyRepository):
 
 
 
-    async def get_workdays_by_date(self, target_date: date, page: int, limit: int):
+    async def get_workdays_by_date(self, target_date: date, page: int, limit: int,**filter_by):
         offset = (page - 1) * limit
 
         # Создаем диапазон дат для фильтрации
@@ -20,6 +20,7 @@ class WorkRepository(SQLAlchemyRepository):
 
         stmt = (
             select(WorkDay)
+            .filter_by(**filter_by)
             .where(WorkDay.work_time >= start_datetime, WorkDay.work_time < end_datetime)
             .order_by(WorkDay.work_time.asc())
             .offset(offset)
@@ -31,13 +32,14 @@ class WorkRepository(SQLAlchemyRepository):
         res_ready = [row[0].to_read_model() for row in result.all()]
         return res_ready
 
-    async def get_workdays(self, page: int, limit: int):
+    async def get_workdays(self, page: int, limit: int,**filter_by):
         today = date.today()
 
         offset = (page - 1) * limit
 
         stmt = (
             select(self.model)
+            .filter_by(**filter_by)
             .where(self.model.work_time >= today)
             .order_by(self.model.work_time.asc())
             .offset(offset)

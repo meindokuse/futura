@@ -15,6 +15,7 @@ class Product(Base):
     type_product: Mapped[str] = mapped_column(String, nullable=False)
     description: Mapped[str] = mapped_column(String, nullable=False)
     components: Mapped[dict] = mapped_column(JSON, nullable=False)  # например вода:400ml (key:val)
+    location_name: Mapped[str] = mapped_column(String, ForeignKey('location.name'), nullable=False)
 
     def to_read_model(self) -> "ProductRead":
         return ProductRead(
@@ -22,7 +23,8 @@ class Product(Base):
             name=self.name,
             type_product=self.type_product,
             description=self.description,
-            components=self.components
+            components=self.components,
+            location_name=self.location_name
         )
 
 
@@ -32,13 +34,15 @@ class Events(Base):
     name: Mapped[str] = mapped_column(String, nullable=False)
     date_start: Mapped[date] = mapped_column(DateTime, nullable=False, default=date.today)
     description: Mapped[str] = mapped_column(String, nullable=False)
+    location_name: Mapped[str] = mapped_column(String, ForeignKey('location.name'), nullable=True)
 
     def to_read_model(self) -> "EventRead":
         return EventRead(
             id=self.id,
             name=self.name,
             date_start=self.date_start,
-            description=self.description
+            description=self.description,
+            location_name=self.location_name
         )
 
 
@@ -48,7 +52,7 @@ class WorkDay(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     work_time: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     employer_fio: Mapped[str] = mapped_column(String, ForeignKey('employer.fio'), nullable=False)
-    status: Mapped[int] = mapped_column(Integer, nullable=False)
+    location_name: Mapped[str] = mapped_column(String, ForeignKey('location.name'), nullable=False)
 
     employer: Mapped["EmployerRead"] = relationship("Employer")
 
@@ -56,15 +60,15 @@ class WorkDay(Base):
         return WorkDayRead(
             id=self.id,
             work_time=self.work_time,
-            status=self.status,
             employer_fio=self.employer_fio,
+            location_name=self.location_name
         )
 
 
 class Location(Base):
     __tablename__ = 'location'
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    name: Mapped[str] = mapped_column(String, nullable=False)
+    name: Mapped[str] = mapped_column(String, nullable=False, unique=True)
     address: Mapped[str] = mapped_column(String, nullable=False)
     description: Mapped[str] = mapped_column(String, nullable=False)
 

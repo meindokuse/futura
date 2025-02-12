@@ -20,7 +20,7 @@ class Employer(Base):
     work_type: Mapped[str] = mapped_column(String, nullable=False)
     contacts: Mapped[Optional[list[str]]] = mapped_column(JSON, nullable=True)
     description: Mapped[Optional[str]] = mapped_column(String, nullable=True)
-    location_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=False)
+    location_name: Mapped[str] = mapped_column(String, ForeignKey('location.name'), nullable=False)
 
 
     def to_read_model(self) -> "EmployerRead":
@@ -33,6 +33,7 @@ class Employer(Base):
             work_type=self.work_type,
             contacts=self.contacts,
             description=self.description,
+            location_name=self.location_name,
         )
 
 class Residents(Base):
@@ -41,10 +42,14 @@ class Residents(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     fio: Mapped[str] = mapped_column(String, nullable=False)
     discount_value: Mapped[int] = mapped_column(Integer, nullable=False)
+    location_name: Mapped[str] = mapped_column(String, ForeignKey('location.name'), nullable=False)
+    description: Mapped[str] = mapped_column(String, nullable=True)
+
 
     def to_read_model(self) -> "ResidentRead":
         return ResidentRead(
             id=self.id,
             fio=self.fio,
-            discount_value=self.discount_value
+            discount_value=self.discount_value,
+            location_name=self.location_name,
         )
