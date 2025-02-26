@@ -1,7 +1,10 @@
-from datetime import datetime
+import asyncio
+import json
+from datetime import datetime, timedelta
 from typing import Optional
 
 from fastapi import HTTPException
+from redis.asyncio import Redis
 
 from src.data.unitofwork import IUnitOfWork
 
@@ -9,11 +12,28 @@ from src.schemas.work_day import WorkDayCreate
 
 
 class WorkService:
+    async def _update_cache(self, uow: IUnitOfWork, page: int, limit: int, location_name: int, redis_client: Redis):
+        schedule_data = await uow.work_day.get_workdays(page=page, limit=limit, location_name=location_name)
+        await redis_client.setex("schedule", timedelta(hours=24), json.dumps(schedule_data))
+        return schedule_data
 
-    async def get_list_workdays(self, uow: IUnitOfWork, page: int, limit: int, location_name: str):
-        async with uow:
-            res = await uow.work_day.get_workdays(page=page, limit=limit, location_name=location_name)
-            return res
+    async def get_schedule(self, uow: IUnitOfWork, page: int, limit: int, location_name: str, redis_client: Redis):
+        cached_schedule = await redis_client.get("schedule")
+        if cached_schedule:
+            return json.loads(cached_schedule)
+
+        schedule_data = await uow.work_day.get_workdays(page=page, limit=limit, location_name=location_name)
+        asyncio.create_task(self._update_cache())
+        return schedule_data
+
+    async def get_list_workdays(self, uow: IUnitOfWork, page: int, limit: int, location_name: str, redis_client: Redis):
+        cached_schedule = await redis_client.get("schedule")
+        if cached_schedule:
+            return json.loads(cached_schedule)
+        else:
+            async with uow:
+                res = await uow.work_day.get_workdays(page=page, limit=limit, location_name=location_name)
+                return res
 
     async def get_list_workdays_for_current_employer(self, uow: IUnitOfWork, fio: str, page: int, limit: int,
                                                      location_name: str):

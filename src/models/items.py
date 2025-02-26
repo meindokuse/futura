@@ -12,7 +12,7 @@ class Product(Base):
     __tablename__ = 'products'
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String, nullable=False)
-    type_product: Mapped[str] = mapped_column(String, nullable=False)
+    type_product: Mapped[str] = mapped_column(String, nullable=False) 
     description: Mapped[str] = mapped_column(String, nullable=False)
     components: Mapped[dict] = mapped_column(JSON, nullable=False)  # например вода:400ml (key:val)
     location_name: Mapped[str] = mapped_column(String, ForeignKey('location.name'), nullable=False)

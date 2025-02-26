@@ -32,7 +32,7 @@ async def login_for_get_token(form_data: Annotated[OAuth2PasswordRequestForm, De
 @router.get('/profile')
 async def get_profile(user: user_dep, uow: UOWDep):
     user_data = await EmployerService().get_current_employer(uow, int(user.get('id')))
-    work_days = await WorkService().get_list_workdays_for_current_employer(uow, user.get('fio'), 1, 10)
+    work_days = await WorkService().get_list_workdays_for_current_employer(uow, user.get('fio'), 1, 10,user_data.location_name)
     return {
         "user": user_data,
         "work_days": work_days
