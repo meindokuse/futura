@@ -1,7 +1,10 @@
 from datetime import date
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
+from redis.asyncio import Redis
+
 from src.api.dependses import IUnitOfWork, UOWDep
+from src.db.cache import get_redis
 from src.schemas.work_day import WorkDayCreate
 
 from src.services.work_service import WorkService
@@ -17,10 +20,11 @@ async def get_list_workdays(
         location_name: str,
         page: int,
         limit: int,
-        uow: UOWDep
+        uow: UOWDep,
+        redis_client: Redis = Depends(get_redis)
 ):
     workday_service = WorkService()
-    list_workdays = await workday_service.get_list_workdays(uow, page, limit, location_name)
+    list_workdays = await workday_service.get_list_workdays(uow, page, limit, location_name,redis_client)
     return list_workdays
 
 
