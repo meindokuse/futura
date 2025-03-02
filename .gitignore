@@ -1,3 +1,4 @@
 .myenv
 .gitignore
 .versions/
+.env

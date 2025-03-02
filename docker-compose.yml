@@ -1,0 +1,69 @@
+version: "3.8"
+
+networks:
+  futura_network:
+
+services:
+  db:
+    container_name: postgres
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASS}
+      POSTGRES_DB: ${DB_NAME}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    env_file:
+      - .env
+    networks:
+      - futura_network
+
+  redis:
+    container_name: redis
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    networks:
+      - futura_network
+
+  futura_service:
+    container_name: futura_service
+    build: ./
+    environment:
+      DB_USER: ${DB_USER}
+      DB_PASS: ${DB_PASS}
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      DB_NAME: ${DB_NAME}
+      REDIS_HOST: redis
+    ports:
+      - "8000:8000"
+    restart: always
+    env_file:
+      - .env
+    depends_on:
+      - db
+      - redis
+    networks:
+      - futura_network
+
+  backup:
+    container_name: backup_service
+    image: postgres:latest
+    volumes:
+      - ./backups:/backups
+      - ./backup.sh:/backup.sh
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASS}
+      POSTGRES_DB: ${DB_NAME}
+    entrypoint: [ "bash", "-c", "while true; do sleep 86400; ./backup.sh; done" ]
+    env_file:
+      - .env
+    networks:
+      - futura_network
+
+volumes:
+  db_data:

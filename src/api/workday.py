@@ -24,7 +24,7 @@ async def get_list_workdays(
         redis_client: Redis = Depends(get_redis)
 ):
     workday_service = WorkService()
-    list_workdays = await workday_service.get_list_workdays(uow, page, limit, location_name,redis_client)
+    list_workdays = await workday_service.get_list_workdays(uow, page, limit, location_name)
     return list_workdays
 
 
