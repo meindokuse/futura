@@ -49,21 +49,6 @@ services:
     networks:
       - futura_network
 
-  backup:
-    container_name: backup_service
-    image: postgres:latest
-    volumes:
-      - ./backups:/backups
-      - ./backup.sh:/backup.sh
-    environment:
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASS}
-      POSTGRES_DB: ${DB_NAME}
-    entrypoint: [ "bash", "-c", "while true; do sleep 86400; ./backup.sh; done" ]
-    env_file:
-      - .env
-    networks:
-      - futura_network
 
 volumes:
   db_data:
