@@ -52,6 +52,7 @@ class WorkDay(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     work_time: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     employer_fio: Mapped[str] = mapped_column(String, ForeignKey('employer.fio'), nullable=False)
+    employer_work_type: Mapped[str] = mapped_column(String, ForeignKey('employer.work_type'), nullable=True) # Потом исправить на False!!!
     location_name: Mapped[str] = mapped_column(String, ForeignKey('location.name'), nullable=False)
 
     employer: Mapped["EmployerRead"] = relationship("Employer")
@@ -61,6 +62,7 @@ class WorkDay(Base):
             id=self.id,
             work_time=self.work_time,
             employer_fio=self.employer_fio,
+            work_type=self.employer_work_type,
             location_name=self.location_name
         )
 

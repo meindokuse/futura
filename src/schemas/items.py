@@ -44,6 +44,7 @@ class WorkDayRead(BaseModel):
     id: int
     work_time: datetime
     employer_fio: str
+    employer_work_type: str
     location_name: str
 
 

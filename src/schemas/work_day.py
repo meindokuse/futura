@@ -7,7 +7,9 @@ from pydantic import BaseModel
 class WorkDayCreate(BaseModel):
     work_time: datetime
     employer_fio: str
+    employer_work_type: str
     location_name: str
+
 
     def preprocess(self):
         if self.work_time.tzinfo is not None:

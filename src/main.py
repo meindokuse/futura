@@ -29,7 +29,7 @@ app.add_middleware(
     allow_methods=["*"],  # Разрешить все методы
     allow_headers=["*"],  # Разрешить все заголовки
 )
-app.include_router(auth_router)
+
 app.include_router(employer_router)
 app.include_router(workday_router)
 
