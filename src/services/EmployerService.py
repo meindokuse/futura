@@ -3,7 +3,7 @@ from typing import Optional
 from fastapi import HTTPException
 
 from src.data.unitofwork import IUnitOfWork
-from src.schemas.peoples import EmployerCreate, EmployerRead, EmployerPut
+from src.schemas.peoples import EmployerCreate, EmployerRead, EmployerUpdate
 from src.utils.jwt_tokens import bcrypt_context
 
 
@@ -29,7 +29,7 @@ class EmployerService:
             return list_employers
     async def get_current_employer(self, uow: IUnitOfWork, id: int):
         async with uow:
-            employer = await uow.employers.find_one(id=id)
+            employer = await uow.employers.get_current_employer(id=id)
         return employer
 
     async def authenticate(self, uow: IUnitOfWork, email: str, password: str):
@@ -66,14 +66,14 @@ class EmployerService:
                 "contacts": employer.contacts,  # JSON автоматически сериализуется
                 "description": employer.description,
                 "hashed_password": hash_password,
-                "location_name":employer.location_name,
+                "location_id":employer.location_id,
             }
 
             # Добавляем данные в таблицу employer
             await uow.employers.add_one(data)
             await uow.commit()
 
-    async def edit_employer(self, uow: IUnitOfWork, new_data: EmployerPut, id: int):
+    async def edit_employer(self, uow: IUnitOfWork, new_data: EmployerUpdate, id: int):
         new_data_dict = new_data.model_dump()
         async with uow:
             await uow.employers.edit_one(id=id, data=new_data_dict)

@@ -3,7 +3,7 @@ from typing import Optional
 from fastapi import APIRouter
 
 from src.api.dependses import UOWDep
-from src.schemas.peoples import EmployerCreate, EmployerRead, EmployerPut
+from src.schemas.peoples import EmployerCreate, EmployerRead, EmployerUpdate
 from src.services.EmployerService import EmployerService
 
 router = APIRouter(
@@ -12,17 +12,17 @@ router = APIRouter(
 )
 
 
-@router.get("/get_list_employers/{location_name}")
+@router.get("/get_list_employers/{location_id}")
 async def list_employers(
         uow: UOWDep,
-        location_name: str,
+        location_id: int,
         page: int = 1,
         limit: int = 10,
         sort_by: str = "fio",
         sort_order: str = "asc",
         work_type: Optional[str] = None
 ):
-    filter_by = {"location_name": location_name}
+    filter_by = {"location_id": location_id}
 
     if work_type:
         filter_by["work_type"] = work_type
@@ -47,7 +47,7 @@ async def get_employer(uow: UOWDep, id: int):
 
 
 @router.put('/edit_employer')
-async def edit_employer(employer_id: int, new_data: EmployerPut, uow: UOWDep):
+async def edit_employer(employer_id: int, new_data: EmployerUpdate, uow: UOWDep):
     await EmployerService().edit_employer(uow, new_data, employer_id)
     return {
         "status": "ok"

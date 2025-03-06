@@ -6,24 +6,24 @@ from src.schemas.items import EventCreate
 
 class EventService:
 
-    async def get_not_actually_events(self, uow: IUnitOfWork, page: int, limit: int, location_name: str):
+    async def get_not_actually_events(self, uow: IUnitOfWork, page: int, limit: int, location_id: int):
         async with uow:
-            list_events = await uow.event.get_not_actually_events(page=page, limit=limit, location_name=location_name)
+            list_events = await uow.event.get_not_actually_events(page=page, limit=limit, location_id=location_id)
             return list_events
 
-    async def get_event_list(self, uow: IUnitOfWork, page: int, limit: int, location_name: str):
+    async def get_event_list(self, uow: IUnitOfWork, page: int, limit: int, location_id: int):
         async with uow:
-            list_events = await uow.event.get_events_actually(page=page, limit=limit, location_name=location_name)
+            list_events = await uow.event.get_events_actually(page=page, limit=limit, location_id=location_id)
             return list_events
 
     async def get_event_list_by_date(self, uow: IUnitOfWork, page: int, limit: int, date: datetime.date,
-                                     location_name: str):
+                                     location_id: int):
         async with uow:
             list_events = await uow.event.get_events_by_date(page=page, limit=limit, target_date=date,
-                                                             location_name=location_name)
+                                                             location_id=location_id)
             return list_events
 
-    async def get_latest_event(self, uow: IUnitOfWork, location_name: str):
+    async def get_latest_event(self, uow: IUnitOfWork, location_id: str):
         async with uow:
             event = await uow.event.get_latest_event(location_name=location_name)
             return event

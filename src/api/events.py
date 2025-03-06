@@ -37,23 +37,23 @@ async def get_events(
     return events
 
 
-@router.get('/get_events_by_date/{location_name}')
+@router.get('/get_events_by_date/{location_id}')
 async def get_events_by_date(
-        location_name: str,
+        location_id: int,
         page: int,
         limit: int,
         target_date: date,
         uow: UOWDep
 ):
     events_service = EventService()
-    events = await events_service.get_event_list_by_date(uow, page, limit, target_date, location_name)
+    events = await events_service.get_event_list_by_date(uow, page, limit, target_date, location_id)
     return events
 
 
-@router.get('/get_latest/{location_name}')
-async def get_latest(location_name: str, uow: UOWDep):
+@router.get('/get_latest/{location_id}')
+async def get_latest(location_id: int, uow: UOWDep):
     events_service = EventService()
-    event = await events_service.get_latest_event(uow, location_name)
+    event = await events_service.get_latest_event(uow, location_id)
     return event
 
 

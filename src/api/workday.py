@@ -17,33 +17,33 @@ router = APIRouter(
 
 @router.get('/{location_name}/get_list_workdays')
 async def get_list_workdays(
-        location_name: str,
+        location_id: int,
         page: int,
         limit: int,
         uow: UOWDep,
         redis_client: Redis = Depends(get_redis)
 ):
     workday_service = WorkService()
-    list_workdays = await workday_service.get_list_workdays(uow, page, limit, location_name)
+    list_workdays = await workday_service.get_list_workdays(uow, page, limit, location_id)
     return list_workdays
 
 
 @router.get('/{location_name}/get_workdays_by_fio')
 async def get_current_workdays_by_fio(
-        location_name: str,
+        location_id: int,
         fio: str,
         page: int,
         limit: int,
         uow: UOWDep
 ):
     workday_service = WorkService()
-    list_workdays = await workday_service.get_list_workdays_for_current_employer(uow, fio, page, limit, location_name)
+    list_workdays = await workday_service.get_list_workdays_for_current_employer(uow, fio, page, limit, location_id)
     return list_workdays
 
 
 @router.get('/{location_name}/get_workday_by_date')
 async def get_current_workdays_by_date(
-        location_name: str,
+        location_id: int,
         target_date: date,
         page: int,
         limit: int,
@@ -51,7 +51,7 @@ async def get_current_workdays_by_date(
 ):
     workday_service = WorkService()
     list_workdays = await workday_service.get_list_workdays_for_current_day(uow, target_date, page, limit,
-                                                                            location_name)
+                                                                            location_id)
     return list_workdays
 
 
@@ -66,6 +66,6 @@ async def add_workday(
 
 
 @router.delete('/delete_workday')
-async def delete_workday(uow: UOWDep, fio: str):
+async def delete_workday(uow: UOWDep, id: int):
     workday_service = WorkService()
-    await workday_service.delete_work_day(uow, fio)
+    await workday_service.delete_work_day(uow, id)

@@ -4,7 +4,7 @@ from sqlalchemy import select
 
 from src.data.repository import SQLAlchemyRepository
 
-from src.models.items import Events
+from src.models.items import Events, Location
 
 
 class EventRepository(SQLAlchemyRepository):
@@ -48,15 +48,17 @@ class EventRepository(SQLAlchemyRepository):
         res_ready = [row[0].to_read_model() for row in result.all()]
         return res_ready
 
-    async def get_latest_event(self,**filter_by):
+    async def get_latest_event(self, **filter_by):
         stmt = (
-            select(self.model)
+            select(Events)  # Явно указываем Events вместо self.model для ясности
+            .join(Location, Events.location_id == Location.id, isouter=True)  # LEFT JOIN, так как location_id nullable
             .filter_by(**filter_by)
-            .order_by(self.model.date_start.desc())  # Сортируем по дате в убывающем порядке
+            .order_by(Events.date_start.desc())  # Сортируем по дате в убывающем порядке
             .limit(1)  # Берём только первую запись
         )
         result = await self.session.execute(stmt)
-        return result.scalars().first().to_read_model()
+        event = result.scalars().first()
+        return event.to_read_model() if event else None
 
     async def get_events_by_date(self, target_date: date, page: int, limit: int, **filter_by):
         offset = (page - 1) * limit
