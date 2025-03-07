@@ -12,6 +12,7 @@ router = APIRouter(
 async def upload_employer_photo(
         category: str,
         file_id: int,
+        expansion: str,
         photo: UploadFile = File(...),
 ):
     try:
@@ -26,7 +27,7 @@ async def upload_employer_photo(
         file_content = await photo.read()
 
         # Загружаем файл в S3
-        file_url = await file_manager.upload_file(file_content, file_id, category)
+        file_url = await file_manager.upload_file(file_content, file_id, category, expansion)
 
         return {
             'status': 'success',
@@ -40,6 +41,7 @@ async def upload_employer_photo(
 async def get_file_url(
         category: str,
         file_id: int,
+        expansion: str,
 ):
     try:
         file_manager = S3Client(
@@ -49,7 +51,7 @@ async def get_file_url(
             bucket_name="futura",
         )
         # Загружаем файл в S3
-        file_url = await file_manager.get_presigned_url(category, file_id)
+        file_url = await file_manager.get_presigned_url(category, file_id, expansion)
 
         return {
             'status': 'success',
@@ -60,7 +62,7 @@ async def get_file_url(
 
 
 @router.delete("/{category}/{file_id}/delete-photo")
-async def delete_file(category: str, file_id: int):
+async def delete_file(category: str, file_id: int, expansion: str):
     try:
         file_manager = S3Client(
             access_key="4c1d4e098a6a4625a46af029860c5554",
@@ -69,11 +71,10 @@ async def delete_file(category: str, file_id: int):
             bucket_name="futura",
         )
         # Загружаем файл в S3
-        await file_manager.delete_file(category, file_id)
+        await file_manager.delete_file(category, file_id, expansion)
 
         return {
             'status': 'success',
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-

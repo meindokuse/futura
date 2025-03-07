@@ -23,9 +23,9 @@ class EventService:
                                                              location_id=location_id)
             return list_events
 
-    async def get_latest_event(self, uow: IUnitOfWork, location_id: str):
+    async def get_latest_event(self, uow: IUnitOfWork):
         async with uow:
-            event = await uow.event.get_latest_event(location_name=location_name)
+            event = await uow.event.get_latest_event()
             return event
 
     async def add_event(self, uow: IUnitOfWork, event: EventCreate):

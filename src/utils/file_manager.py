@@ -6,7 +6,6 @@ from botocore.config import Config
 from fastapi import HTTPException
 
 
-
 class S3Client:
     def __init__(self, access_key: str, secret_key: str, endpoint_url: str, bucket_name: str):
         self.config = {
@@ -30,13 +29,14 @@ class S3Client:
             self,
             file: bytes,
             file_id: int,
-            category: str
+            category: str,
+            expansion: str,
     ):
         """
         Загружает файл в S3 и возвращает ссылку на файл.
         """
         # Генерируем уникальное имя файла
-        object_name = f"{category}_{file_id}"
+        object_name = f"{category}_{file_id}.{expansion}"
 
         try:
             async with self.get_client() as client:
@@ -51,15 +51,15 @@ class S3Client:
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
 
-    async def delete_file(self, category: str, file_id: int):
+    async def delete_file(self, category: str, file_id: int, expansion: str):
 
         """
         Удаляет файл из S3.
         """
-        filename = f"{category}_{file_id}"
+        object_name = f"{category}_{file_id}.{expansion}"
         try:
             async with self.get_client() as client:
-                await client.delete_object(Bucket=self.bucket_name, Key=filename)
+                await client.delete_object(Bucket=self.bucket_name, Key=object_name)
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
 
@@ -76,13 +76,13 @@ class S3Client:
     #         except Exception as e:
     #             raise HTTPException(status_code=500, detail=str(e))
 
-    async def get_presigned_url(self, category: str, file_id: int):
-        filename = f"{category}_{file_id}"
+    async def get_presigned_url(self, category: str, file_id: int, expansion: str):
+        object_name = f"{category}_{file_id}.{expansion}"
         async with self.get_client() as client:
             try:
                 presigned_url = await client.generate_presigned_url(
                     "get_object",
-                    Params={"Bucket": self.bucket_name, "Key": filename},
+                    Params={"Bucket": self.bucket_name, "Key": object_name},
                     ExpiresIn=3600,  # Срок действия ссылки
                 )
                 return {"url": presigned_url}
@@ -92,11 +92,12 @@ class S3Client:
     async def update_file(self,
                           file: bytes,
                           file_id: int,
-                          category: str
+                          category: str,
+                          expansion: str,
                           ):
         try:
-            await self.delete_file(category, file_id)
-            await self.upload_file(file, file_id, category)
+            await self.delete_file(category, file_id, expansion)
+            await self.upload_file(file, file_id, category, expansion)
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
 

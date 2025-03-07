@@ -1,4 +1,5 @@
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 
 from src.data.repository import SQLAlchemyRepository
 from src.models.items import Location
@@ -33,7 +34,7 @@ class EmployerRepository(SQLAlchemyRepository):
 
         stmt = (
             select(Employer)
-            .join(Location, Employer.location_id == Location.id)
+            .options(selectinload(Employer.location))  # Явная загрузка location
             .where(*filters)
             .order_by(order_by)
             .offset(start)

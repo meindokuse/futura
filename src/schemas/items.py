@@ -4,20 +4,20 @@ from typing import Optional
 from pydantic import BaseModel
 
 
-class ProductCreate(BaseModel):
+class CardCreate(BaseModel):
     name: str
     description: str
-    type_product: str
-    components: dict
+    category: str
     location_id: int
 
 
-class ProductRead(BaseModel):
+class CardRead(BaseModel):
     id:int
     name: str
     description: str
-    type_product: str
-    components: dict
+    category: str
+    location_id: int
+
 
 class EventCreate(BaseModel):
     name: str
@@ -34,6 +34,13 @@ class EventRead(BaseModel):
 
     class Config:
         orm_mode = True
+
+class EventReadMain(BaseModel):
+    id: int
+    name: str
+    date_start: datetime
+    description: str
+
 
 class EventsUpdate(BaseModel):
     name: Optional[str] = None

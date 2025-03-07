@@ -9,7 +9,7 @@ from src.api.auth import router as auth_router
 from src.api.employers import router as employer_router
 from src.api.workday import router as workday_router
 from src.api.events import router as event_router
-from src.api.product import router as product_router
+from src.api.card import router as product_router
 from src.api.residents import router as residents_router
 from src.api.locations import router as location_router
 from src.api.files import router as files_router
@@ -29,7 +29,7 @@ app.add_middleware(
     allow_methods=["*"],  # Разрешить все методы
     allow_headers=["*"],  # Разрешить все заголовки
 )
-
+app.include_router(auth_router)
 app.include_router(employer_router)
 app.include_router(workday_router)
 

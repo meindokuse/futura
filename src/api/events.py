@@ -1,3 +1,5 @@
+from typing import Optional
+
 from fastapi import APIRouter
 from src.api.dependses import UOWDep
 from datetime import date
@@ -13,47 +15,49 @@ router = APIRouter(
 )
 
 
-@router.get('/get_not_actually_events/{location_name}')
+@router.get('/get_not_actually_events')
 async def get_not_actually_events(
-        location_name: str,
+        uow: UOWDep,
         page: int,
         limit: int,
-        uow: UOWDep
+        location_id: Optional[int] = None,
 ):
     events_service = EventService()
-    events = await events_service.get_not_actually_events(uow, page, limit, location_name)
+    events = await events_service.get_not_actually_events(uow, page, limit, location_id)
     return events
 
 
-@router.get("/get_events/{location_name}")
+@router.get("/get_events")
 async def get_events(
-        location_name: str,
+        uow: UOWDep,
         page: int,
         limit: int,
-        uow: UOWDep
+        location_id: Optional[int] = None,
 ):
     events_service = EventService()
-    events = await events_service.get_event_list(uow, page, limit, location_name)
+    events = await events_service.get_event_list(uow, page, limit, location_id)
     return events
 
 
-@router.get('/get_events_by_date/{location_id}')
+@router.get('/get_events_by_date')
 async def get_events_by_date(
-        location_id: int,
+        uow: UOWDep,
         page: int,
         limit: int,
         target_date: date,
-        uow: UOWDep
+        location_id: Optional[int] = None,
 ):
     events_service = EventService()
     events = await events_service.get_event_list_by_date(uow, page, limit, target_date, location_id)
     return events
 
 
-@router.get('/get_latest/{location_id}')
-async def get_latest(location_id: int, uow: UOWDep):
+@router.get('/get_latest')
+async def get_latest(
+        uow: UOWDep,
+):
     events_service = EventService()
-    event = await events_service.get_latest_event(uow, location_id)
+    event = await events_service.get_latest_event(uow)
     return event
 
 

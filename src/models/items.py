@@ -4,28 +4,27 @@ from typing import Dict
 from sqlalchemy import Integer, String, JSON, Date, DateTime, ForeignKey, Time
 from sqlalchemy.orm import mapped_column, Mapped, relationship
 
-from src.schemas.items import EventRead, ProductRead, WorkDayRead, LocationRead
+from src.schemas.items import EventRead, WorkDayRead, LocationRead, CardRead
 from src.db.database import Base
+from src.schemas.items import EventReadMain
 
 
-class Product(Base):
-    __tablename__ = 'products'
+class Card(Base):
+    __tablename__ = 'cards'
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String, nullable=False)
-    type_product: Mapped[str] = mapped_column(String, nullable=False)
     description: Mapped[str] = mapped_column(String, nullable=False)
-    components: Mapped[Dict] = mapped_column(JSON, nullable=False)  # { "вода": "400ml" }
-    location_id: Mapped[int] = mapped_column(Integer, ForeignKey('location.id'), nullable=False)
+    category: Mapped[str] = mapped_column(String, nullable=False)
+    location_id: Mapped[int] = mapped_column(Integer, ForeignKey('location.id'), nullable=True)
 
     location = relationship("Location")
 
-    def to_read_model(self) -> "ProductRead":
-        return ProductRead(
+    def to_read_model(self) -> "CardRead":
+        return CardRead(
             id=self.id,
             name=self.name,
-            type_product=self.type_product,
             description=self.description,
-            components=self.components,
+            category=self.category,
             location_id=self.location_id,
         )
 
@@ -48,6 +47,15 @@ class Events(Base):
             description=self.description,
             location_name=self.location.name if self.location else None
         )
+
+    def to_read_model_second(self) -> "EventReadMain":
+        return EventReadMain(
+            id=self.id,
+            name=self.name,
+            date_start=self.date_start,
+            description=self.description,
+        )
+
 
 class WorkDay(Base):
     __tablename__ = 'workdays'

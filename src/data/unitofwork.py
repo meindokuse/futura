@@ -4,7 +4,7 @@ from typing import Type
 from src.db.database import async_session_maker
 from src.repositories.items.event_repository import EventRepository
 from src.repositories.items.location_repository import LocationRepository
-from src.repositories.items.product_repository import ProductRepository
+from src.repositories.items.card_repository import CardRepository
 from src.repositories.peoples.employer_repository import EmployerRepository
 from src.repositories.peoples.residents_repository import ResidentsRepository
 from src.repositories.items.work_repository import WorkRepository
@@ -16,7 +16,7 @@ class IUnitOfWork(ABC):
     employers: Type[EmployerRepository]
 
     work_day: Type[WorkRepository]
-    product: Type[ProductRepository]
+    card: Type[CardRepository]
     event: Type[EventRepository]
     location: Type[LocationRepository]
 
@@ -51,7 +51,7 @@ class UnitOfWork:
         self.residents = ResidentsRepository(self.session)
         self.employers = EmployerRepository(self.session)
         self.work_day = WorkRepository(self.session)
-        self.product = ProductRepository(self.session)
+        self.card = CardRepository(self.session)
         self.event = EventRepository(self.session)
         self.location = LocationRepository(self.session)
 

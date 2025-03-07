@@ -1,6 +1,7 @@
 from datetime import date, datetime, timedelta
 
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 
 from src.data.repository import SQLAlchemyRepository
 
@@ -26,7 +27,7 @@ class EventRepository(SQLAlchemyRepository):
 
         result = await self.session.execute(stmt)
 
-        res_ready = [row[0].to_read_model() for row in result.all()]
+        res_ready = [row[0].to_read_model_second() for row in result.all()]
         return res_ready
 
     async def get_events_actually(self, page: int, limit: int, **filter_by):
@@ -45,17 +46,21 @@ class EventRepository(SQLAlchemyRepository):
 
         result = await self.session.execute(stmt)
 
-        res_ready = [row[0].to_read_model() for row in result.all()]
+        res_ready = [row[0].to_read_model_second() for row in result.all()]
         return res_ready
 
     async def get_latest_event(self, **filter_by):
         stmt = (
-            select(Events)  # Явно указываем Events вместо self.model для ясности
-            .join(Location, Events.location_id == Location.id, isouter=True)  # LEFT JOIN, так как location_id nullable
-            .filter_by(**filter_by)
+            select(Events)
+            .options(
+                selectinload(Events.location),  # Загружаем связанный Location
+            )
+            .join(Location, Events.location_id == Location.id, isouter=True)  # LEFT JOIN
+            .filter_by(**filter_by)  # Фильтруем по атрибутам Events
             .order_by(Events.date_start.desc())  # Сортируем по дате в убывающем порядке
             .limit(1)  # Берём только первую запись
         )
+
         result = await self.session.execute(stmt)
         event = result.scalars().first()
         return event.to_read_model() if event else None
@@ -78,5 +83,5 @@ class EventRepository(SQLAlchemyRepository):
 
         result = await self.session.execute(stmt)
 
-        res_ready = [row[0].to_read_model() for row in result.all()]
+        res_ready = [row[0].to_read_model_second() for row in result.all()]
         return res_ready
