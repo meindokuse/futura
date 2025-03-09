@@ -1,4 +1,4 @@
 .myenv
 .gitignore
-.versions/
+alembic/versions/*
 .env

@@ -10,13 +10,13 @@ router = APIRouter(
 )
 
 
-@router.get('/{location_name}/get_list_residents')
+@router.get('/get_list_residents')
 async def get_list_residents(page: int, limit: int, uow: UOWDep):
     list_residents = await ResidentsService().get_list_residents(uow, page, limit)
     return list_residents
 
 
-@router.get('/{location_name}/get_resident_by_fio')
+@router.get('/get_resident_by_fio')
 async def get_resident(page: int, limit: int, fio: str, uow: UOWDep):
     residents = await ResidentsService().get_current_residents(uow, fio, page, limit)
     return residents

@@ -15,7 +15,7 @@ router = APIRouter(
 )
 
 
-@router.get('/{location_name}/get_list_workdays')
+@router.get('/get_list_workdays')
 async def get_list_workdays(
         location_id: int,
         page: int,
@@ -28,7 +28,7 @@ async def get_list_workdays(
     return list_workdays
 
 
-@router.get('/{location_name}/get_workdays_by_fio')
+@router.get('/get_workdays_by_fio')
 async def get_current_workdays_by_fio(
         location_id: int,
         fio: str,
@@ -41,7 +41,7 @@ async def get_current_workdays_by_fio(
     return list_workdays
 
 
-@router.get('/{location_name}/get_workday_by_date')
+@router.get('/get_workday_by_date')
 async def get_current_workdays_by_date(
         location_id: int,
         target_date: date,
