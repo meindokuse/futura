@@ -1,3 +1,4 @@
+from datetime import date
 from typing import Optional
 
 from fastapi import HTTPException
@@ -11,6 +12,7 @@ class EmployerService:
 
     async def get_list_employers(
             self,
+            fio: str,
             uow: IUnitOfWork,
             page: int,
             limit: int,
@@ -25,8 +27,10 @@ class EmployerService:
                 sort_by=sort_by,
                 sort_order=sort_order,
                 filter_by=filter_by or {},
+                fio=fio,
             )
             return list_employers
+
     async def get_current_employer(self, uow: IUnitOfWork, id: int):
         async with uow:
             employer = await uow.employers.get_current_employer(id=id)
@@ -34,23 +38,28 @@ class EmployerService:
 
     async def authenticate(self, uow: IUnitOfWork, email: str, password: str):
         async with uow:
-            employer = await uow.employers.find_one(email=email)
+            employer = await uow.employers.valid_employer(email=email)
             if not employer:
                 return False
             if not bcrypt_context.verify(password, employer.password):
                 return False
             return employer
 
+    async def get_list_of_birth(self, uow: IUnitOfWork, page: int, limit: int):
+        async with uow:
+            list_of_birth = await uow.employers.get_list_of_birth(page, limit)
+            return list_of_birth
+
     # ДЛЯ АДМИНА
     async def add_employer(self, uow: IUnitOfWork, employer: EmployerCreate):
         async with uow:
             # Проверяем, существует ли уже работник с таким ФИО
-            is_exist_fio = await uow.employers.find_one(fio=employer.fio)
+            is_exist_fio = await uow.employers.valid_employer(fio=employer.fio)
             if is_exist_fio:
                 raise HTTPException(status_code=401, detail='Name already registered')
 
             # Проверяем, существует ли уже работник с таким email
-            if_exist_email = await uow.employers.find_one(email=employer.email)
+            if_exist_email = await uow.employers.valid_employer(email=employer.email)
             if if_exist_email:
                 raise HTTPException(status_code=401, detail='Email already registered')
 
@@ -66,7 +75,8 @@ class EmployerService:
                 "contacts": employer.contacts,  # JSON автоматически сериализуется
                 "description": employer.description,
                 "hashed_password": hash_password,
-                "location_id":employer.location_id,
+                "date_of_birth":employer.date_of_birth,
+                "location_id": employer.location_id,
             }
 
             # Добавляем данные в таблицу employer

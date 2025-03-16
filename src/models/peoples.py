@@ -1,11 +1,13 @@
+from datetime import date
 from typing import Optional, List
 
-from sqlalchemy import ForeignKey
+from sqlalchemy import ForeignKey, Date
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.types import Integer, String, Boolean, JSON
 
 from src.db.database import Base
-from src.schemas.peoples import EmployerRead, ResidentRead
+from src.schemas.peoples import EmployerRead, ResidentRead, EmployerReadForBirth, EmployerReadForCards, \
+    EmployerReadForValidate
 
 
 class Employer(Base):
@@ -13,6 +15,7 @@ class Employer(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     email: Mapped[str] = mapped_column(String, unique=True, nullable=False)
     hashed_password: Mapped[str] = mapped_column(String, nullable=False)
+    date_of_birth: Mapped[date] = mapped_column(Date, nullable=True)
     roles: Mapped[List[str]] = mapped_column(JSON, default=["employee"])
     fio: Mapped[str] = mapped_column(String, nullable=False, unique=True)
     work_type: Mapped[str] = mapped_column(String, nullable=False)
@@ -35,6 +38,31 @@ class Employer(Base):
             description=self.description,
             location_name=self.location.name,
         )
+
+    def to_read_model_for_birth(self) -> EmployerReadForBirth:
+        return EmployerReadForBirth(
+            id=self.id,
+            date_of_birth=self.date_of_birth,
+            fio=self.fio,
+            work_type=self.work_type
+        )
+
+    def to_read_model_for_cards(self) -> EmployerReadForCards:
+        return EmployerReadForCards(
+            id=self.id,
+            fio=self.fio,
+            work_type=self.work_type
+        )
+
+    def to_read_model_for_validate(self) -> EmployerReadForValidate:
+        return EmployerReadForValidate(
+            id=self.id,
+            email=self.email,
+            hashed_password=self.hashed_password,
+            roles=self.roles,
+            fio=self.fio,
+        )
+
 
 class Residents(Base):
     __tablename__ = 'residents'

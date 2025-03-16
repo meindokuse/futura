@@ -1,4 +1,4 @@
-from datetime import datetime, date
+from datetime import datetime, date, time
 from typing import Dict
 
 from sqlalchemy import Integer, String, JSON, Date, DateTime, ForeignKey, Time
@@ -15,6 +15,7 @@ class Card(Base):
     name: Mapped[str] = mapped_column(String, nullable=False)
     description: Mapped[str] = mapped_column(String, nullable=False)
     category: Mapped[str] = mapped_column(String, nullable=False)
+    exp: Mapped[str] = mapped_column(String, nullable=False)
     location_id: Mapped[int] = mapped_column(Integer, ForeignKey('location.id'), nullable=True)
 
     location = relationship("Location")
@@ -68,6 +69,7 @@ class WorkDay(Base):
     )
     location_id: Mapped[int] = mapped_column(Integer, ForeignKey('location.id'), nullable=False, index=True)
     work_time: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    time_end: Mapped[time] = mapped_column(Time, nullable=True)
 
     employer = relationship("Employer", back_populates="workdays")  # Обратная связь
     location = relationship("Location")
@@ -79,6 +81,7 @@ class WorkDay(Base):
             employer_fio=self.employer.fio,
             employer_work_type=self.employer.work_type,
             location_name=self.location.name,
+            time_end=self.time_end,
         )
 
 

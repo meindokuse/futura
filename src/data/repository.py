@@ -1,7 +1,10 @@
 from abc import ABC, abstractmethod
+from typing import List
 
 from sqlalchemy import insert, select, update, delete
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.dialects.postgresql import insert  # Импортируем insert из диалекта PostgreSQL
+
 
 
 class AbstractRepository(ABC):
@@ -20,6 +23,32 @@ class SQLAlchemyRepository(AbstractRepository):
     def __init__(self, session: AsyncSession):
         self.session = session
 
+
+    async def add_all(self, data_list: List[dict], on_conflict_update: bool = False, conflict_fields: List[str] = None) -> List[int]:
+        """
+        Добавляет несколько записей в базу данных.
+        :param conflict_fields:
+        :param data_list: Список данных для добавления.
+        :param on_conflict_update: Если True, обновляет записи при дубликате.
+        :param conflict_fields: Поле, по которому проверяется дубликат.
+        :return: Список ID добавленных или обновленных записей.
+        """
+
+        if on_conflict_update and conflict_fields:
+            stmt = (
+                insert(self.model)
+                .values(data_list)
+                .on_conflict_do_update(
+                    index_elements=conflict_fields,  # Поле для проверки дубликата
+                    set_={k: getattr(self.model, k) for k in data_list[0].keys()}  # Обновляем все поля
+                )
+                .returning(self.model.id)
+            )
+        else:
+            stmt = insert(self.model).values(data_list).returning(self.model.id)
+
+        res = await self.session.execute(stmt)
+        return [row[0] for row in res.all()]
 
     async def get_table(self):
         stmt = select(self.model)
@@ -71,6 +100,10 @@ class SQLAlchemyRepository(AbstractRepository):
         if res:
             return res.to_read_model()
         return None
+
     async def delete_one(self,**filter_by):
         stmt = delete(self.model).filter_by(**filter_by)
         await self.session.execute(stmt)
+
+
+

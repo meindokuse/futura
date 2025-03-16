@@ -1,4 +1,5 @@
 from datetime import date, datetime, timedelta
+from typing import List
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import selectinload
@@ -6,6 +7,7 @@ from sqlalchemy.orm import selectinload
 from src.data.repository import SQLAlchemyRepository
 from src.models.items import WorkDay, Location
 from src.models.peoples import Employer
+from src.schemas.work_day import WorkDayCreate
 
 
 class WorkRepository(SQLAlchemyRepository):
@@ -65,7 +67,7 @@ class WorkRepository(SQLAlchemyRepository):
                 selectinload(WorkDay.employer),  # Загружаем связанный Employer
                 selectinload(WorkDay.location),  # Загружаем связанный Location
             )
-            .where(Employer.fio == fio, WorkDay.location_id == location_id)  # Фильтр по ФИО и location_id
+            .where(Employer.fio == fio.lower(), WorkDay.location_id == location_id)  # Фильтр по ФИО и location_id
             .order_by(WorkDay.work_time.asc())
             .offset(offset)
             .limit(limit)
@@ -74,3 +76,8 @@ class WorkRepository(SQLAlchemyRepository):
         result = await self.session.execute(stmt)
         res_ready = [row[0].to_read_model() for row in result.all()]
         return res_ready
+
+    async def add_list_workdays(self,workdays: List[WorkDayCreate]):
+        stmt = select(WorkDay)
+
+

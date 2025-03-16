@@ -1,4 +1,5 @@
 from datetime import date
+from typing import List
 
 from fastapi import APIRouter, Depends
 from redis.asyncio import Redis
@@ -8,6 +9,7 @@ from src.db.cache import get_redis
 from src.schemas.work_day import WorkDayCreate
 
 from src.services.work_service import WorkService
+from fastapi import BackgroundTasks
 
 router = APIRouter(
     tags=['workdays'],
@@ -17,14 +19,15 @@ router = APIRouter(
 
 @router.get('/get_list_workdays')
 async def get_list_workdays(
+        back_tasks: BackgroundTasks,
         location_id: int,
         page: int,
         limit: int,
         uow: UOWDep,
-        redis_client: Redis = Depends(get_redis)
+        redis_client: Redis = Depends(get_redis),
 ):
     workday_service = WorkService()
-    list_workdays = await workday_service.get_list_workdays(uow, page, limit, location_id)
+    list_workdays = await workday_service.get_schedule(uow, page, limit, location_id, redis_client, back_tasks)
     return list_workdays
 
 
@@ -64,6 +67,14 @@ async def add_workday(
     workday_service = WorkService()
     await workday_service.add_employers_to_work(uow, workday)
 
+@router.post('/add_list_workdays')
+async def add_workday(
+        workdays: List[WorkDayCreate],
+        uow: UOWDep
+):
+    workdays = [workday.preprocess() for workday in workdays]
+    workday_service = WorkService()
+    await workday_service.add_list_workdays(uow, workdays)
 
 @router.delete('/delete_workday')
 async def delete_workday(uow: UOWDep, id: int):

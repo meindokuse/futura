@@ -8,10 +8,9 @@ class ResidentsService:
             list_residents = await uow.residents.find_all(page=page, limit=limit, location_name=location_name)
             return list_residents
 
-    async def get_current_residents(self, uow: IUnitOfWork, fio: str, page: int, limit: int, location_name: str):
+    async def get_current_residents(self, uow: IUnitOfWork, fio: str, page: int, limit: int):
         async with uow:
-            residents = await uow.residents.find_with_filter(page=page, limit=limit, fio=fio,
-                                                             location_name=location_name)
+            residents = await uow.residents.find_with_filter(page=page, limit=limit, fio=fio)
             return residents
 
     # ДЛЯ АДМИНА

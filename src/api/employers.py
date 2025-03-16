@@ -20,7 +20,9 @@ async def list_employers(
         limit: int = 10,
         sort_by: str = "fio",
         sort_order: str = "asc",
-        work_type: Optional[str] = None
+        work_type: Optional[str] = None,
+        fio: Optional[str] = None,
+
 ):
     filter_by = {"location_id": location_id}
 
@@ -35,6 +37,7 @@ async def list_employers(
         sort_by=sort_by,
         sort_order=sort_order,
         filter_by=filter_by,
+        fio=fio
     )
     return employers
 
@@ -52,6 +55,12 @@ async def edit_employer(employer_id: int, new_data: EmployerUpdate, uow: UOWDep)
     return {
         "status": "ok"
     }
+
+
+@router.get('/get_list_birth')
+async def get_list_birth(uow: UOWDep, page: int, limit: int):
+    list_birth = await EmployerService().get_list_of_birth(uow, page, limit)
+    return list_birth
 
 
 @router.delete('/delete_employer')

@@ -1,3 +1,4 @@
+from datetime import date
 from typing import List, Optional
 
 from pydantic import BaseModel
@@ -25,22 +26,11 @@ class ResidentUpdate(BaseModel):
     location_id: Optional[int] = None
     description: Optional[str] = None
 
-
-
-# class EmployerCreate(BaseModel):
-#     email: str
-#     fio: str
-#     work_type: str
-#     roles: List[str]
-#     contacts: Optional[List[str]] = None
-#     description: Optional[str] = None
-#     hashed_password: str
-#     location_name: str - СТАРАЯ МОДЕЛЬ
-
 class EmployerCreate(BaseModel):
     email: str
     hashed_password: str
     roles: List[str] = ["employee"]
+    date_of_birth: date
     fio: str
     work_type: str
     contacts: Optional[List[str]] = None
@@ -51,6 +41,7 @@ class EmployerRead(BaseModel):
     id: int
     email: str
     hashed_password: str
+    date_of_birth: date
     roles: List[str]
     fio: str
     work_type: str
@@ -60,6 +51,29 @@ class EmployerRead(BaseModel):
 
     class Config:
         orm_mode = True
+
+class EmployerReadForValidate(BaseModel):
+    id: int
+    email: str
+    hashed_password: str
+    roles: List[str]
+    fio: str
+
+    class Config:
+        orm_mode = True
+
+
+class EmployerReadForBirth(BaseModel):
+    id:int
+    fio: str
+    work_type: str
+    date_of_birth: date
+
+class EmployerReadForCards(BaseModel):
+    id: int
+    fio: str
+    work_type: str
+
 
 
 class EmployerUpdate(BaseModel):
