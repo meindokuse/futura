@@ -4,7 +4,7 @@ from typing import Optional
 from fastapi import HTTPException
 
 from src.data.unitofwork import IUnitOfWork
-from src.schemas.peoples import EmployerCreate, EmployerRead, EmployerUpdate
+from src.schemas.peoples import EmployerCreate, EmployerUpdate
 from src.utils.jwt_tokens import bcrypt_context
 
 

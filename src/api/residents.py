@@ -1,3 +1,5 @@
+from typing import Optional
+
 from fastapi import APIRouter
 
 from src.api.dependses import UOWDep
@@ -16,10 +18,16 @@ async def get_list_residents(page: int, limit: int, uow: UOWDep):
     return list_residents
 
 
-@router.get('/get_residents_by_fio')
-async def get_resident(page: int, limit: int, fio: str, uow: UOWDep):
-    residents = await ResidentsService().get_current_residents(uow, fio, page, limit)
+@router.get('/get_residents_by_filters')
+async def get_residents_by_filters(page: int, limit: int, fio: str, uow: UOWDep, location_id: Optional[int] = None):
+    residents = await ResidentsService().get_residents_with_filter(uow, fio, page, limit, location_id)
     return residents
+
+
+@router.get('/get_resident')
+async def get_resident(id: int, uow: UOWDep):
+    resident = await ResidentsService().get_current_resident(uow, id)
+    return resident
 
 
 @router.post('/add_resident')

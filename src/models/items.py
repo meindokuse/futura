@@ -67,7 +67,7 @@ class WorkDay(Base):
         nullable=False,
         index=True
     )
-    location_id: Mapped[int] = mapped_column(Integer, ForeignKey('location.id'), nullable=False, index=True)
+    location_id: Mapped[int] = mapped_column(Integer, ForeignKey('location.id'), nullable=False)
     work_time: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     time_end: Mapped[time] = mapped_column(Time, nullable=True)
 
@@ -83,19 +83,6 @@ class WorkDay(Base):
             location_name=self.location.name,
             time_end=self.time_end,
         )
-
-
-# class WorkDay(Base):
-#     __tablename__ = 'workdays'
-#     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-#     employer_id: Mapped[int] = mapped_column(Integer, ForeignKey('employer.id'), nullable=False, index=True)
-#     location_id: Mapped[int] = mapped_column(Integer, ForeignKey('location.id'), nullable=False, index=True)
-#     work_date: Mapped[date] = mapped_column(Date, nullable=False)  # Дата смены
-#     start_time: Mapped[str] = mapped_column(String, nullable=False)  # "09:00"
-#     end_time: Mapped[str] = mapped_column(String, nullable=False)    # "18:00"
-#
-#     employer = relationship("Employer")
-#     location = relationship("Location")
 
 
 class Location(Base):

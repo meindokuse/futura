@@ -16,9 +16,15 @@ class ResidentRead(BaseModel):
     fio: str
     discount_value: int
     description: Optional[str]
+    location_name:str
 
     class Config:
         orm_mode = True
+
+class ResidentReadForCards(BaseModel):
+    id: int
+    fio: str
+
 
 class ResidentUpdate(BaseModel):
     fio: Optional[str] = None

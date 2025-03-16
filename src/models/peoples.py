@@ -4,10 +4,10 @@ from typing import Optional, List
 from sqlalchemy import ForeignKey, Date
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.types import Integer, String, Boolean, JSON
-
+from src.models.items import Location
 from src.db.database import Base
 from src.schemas.peoples import EmployerRead, ResidentRead, EmployerReadForBirth, EmployerReadForCards, \
-    EmployerReadForValidate
+    EmployerReadForValidate, ResidentReadForCards
 
 
 class Employer(Base):
@@ -30,6 +30,7 @@ class Employer(Base):
         return EmployerRead(
             id=self.id,
             hashed_password=self.hashed_password,
+            date_of_birth=self.date_of_birth,
             email=self.email,
             fio=self.fio,
             roles=self.roles,
@@ -79,6 +80,14 @@ class Residents(Base):
             id=self.id,
             fio=self.fio,
             discount_value=self.discount_value,
-            location_id=self.location_id,
+            location_name=self.location.name,
             description=self.description,
         )
+
+    def to_read_model_for_cards(self) -> ResidentReadForCards:
+        return ResidentReadForCards(
+            id=self.id,
+            fio=self.fio
+        )
+
+

@@ -83,7 +83,9 @@ class EmployerRepository(SQLAlchemyRepository):
     async def get_current_employer(self, id: int):
         stmt = (
             select(Employer)
-            .join(Location, Employer.location_id == Location.id)
+            .options(
+                selectinload(Employer.location)
+            )
             .where(Employer.id == id)
         )
 
