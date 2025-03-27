@@ -1,10 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from markdown_it.rules_inline import image
 
-from src.api.residents import router
-from src.middlewares.token_validator import TokenValidationMiddleware
-from src.middlewares.admin_cheker import AdminRoleMiddleware
 from src.api.auth import router as auth_router
 from src.api.employers import router as employer_router
 from src.api.workday import router as workday_router

@@ -1,4 +1,6 @@
 .myenv
 .gitignore
-alembic/versions/*
 .env
+alembic/
+.idea
+alembic.ini

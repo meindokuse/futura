@@ -15,9 +15,10 @@ router = APIRouter(
 @router.post('/admin/add_card')
 async def add_card(uow: UOWDep, card: CardCreate):
     card_service = CardService()
-    await card_service.add_card(uow, card)
+    id = await card_service.add_card(uow, card)
     return {
         "status": "success",
+        'id':id
     }
 
 

@@ -56,12 +56,12 @@ class EmployerService:
             # Проверяем, существует ли уже работник с таким ФИО
             is_exist_fio = await uow.employers.valid_employer(fio=employer.fio)
             if is_exist_fio:
-                raise HTTPException(status_code=401, detail='Name already registered')
+                raise HTTPException(status_code=409, detail='Name already registered')
 
             # Проверяем, существует ли уже работник с таким email
             if_exist_email = await uow.employers.valid_employer(email=employer.email)
             if if_exist_email:
-                raise HTTPException(status_code=401, detail='Email already registered')
+                raise HTTPException(status_code=409, detail='Email already registered')
 
             # Хэшируем пароль
             hash_password = bcrypt_context.hash(employer.hashed_password)
@@ -80,8 +80,9 @@ class EmployerService:
             }
 
             # Добавляем данные в таблицу employer
-            await uow.employers.add_one(data)
+            id = await uow.employers.add_one(data)
             await uow.commit()
+            return id
 
     async def edit_employer(self, uow: IUnitOfWork, new_data: EmployerUpdate, id: int):
         new_data_dict = new_data.model_dump()

@@ -1,11 +1,9 @@
-from datetime import date, timedelta
 from operator import or_
 
-from sqlalchemy import select, extract, and_, case
+from sqlalchemy import  case
 from sqlalchemy.orm import selectinload
 
 from src.data.repository import SQLAlchemyRepository
-from src.models.items import Location
 from src.models.peoples import Employer
 
 from datetime import date, timedelta

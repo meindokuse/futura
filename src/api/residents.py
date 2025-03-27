@@ -32,9 +32,10 @@ async def get_resident(id: int, uow: UOWDep):
 
 @router.post('/add_resident')
 async def add_new_resident(resident: ResidentCreate, uow: UOWDep):
-    await ResidentsService().add_resident(uow, resident)
+    id = await ResidentsService().add_resident(uow, resident)
     return {
         "status": "ok",
+        'id':id
     }
 
 

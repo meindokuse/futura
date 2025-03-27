@@ -19,8 +19,9 @@ class CardService:
     async def add_card(self, uow: IUnitOfWork, product: CardCreate):
         data = product.model_dump()
         async with uow:
-            await uow.card.add_one(data)
+            id = await uow.card.add_one(data)
             await uow.commit()
+            return id
 
     async def delete_card(self, uow: IUnitOfWork, id: int):
         async with uow:

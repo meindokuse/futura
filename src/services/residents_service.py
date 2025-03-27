@@ -27,8 +27,9 @@ class ResidentsService:
     async def add_resident(self, uow: IUnitOfWork, resident: ResidentCreate):
         dict_resident = resident.model_dump()
         async with uow:
-            await uow.residents.add_one(data=dict_resident)
+            id = await uow.residents.add_one(data=dict_resident)
             await uow.commit()
+            return id
 
     async def delete_resident(self, uow: IUnitOfWork, id: int):
         async with uow:

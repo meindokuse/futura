@@ -41,9 +41,10 @@ async def get_profile(user: user_dep, uow: UOWDep):
 
 @router.post('/admin/register')
 async def register(new_user: EmployerCreate, uow: UOWDep):
-    await EmployerService().add_employer(uow, new_user)
+    id = await EmployerService().add_employer(uow, new_user)
     return {
         'status': 'success',
+        'id':id
     }
 
 # @router.post("/logout")
