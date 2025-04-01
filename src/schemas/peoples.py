@@ -8,7 +8,6 @@ from pydantic import BaseModel
 class ResidentCreate(BaseModel):
     fio: str
     discount_value: int
-    location_id: int
     description: Optional[str] = None
 
 class ResidentRead(BaseModel):
@@ -16,7 +15,6 @@ class ResidentRead(BaseModel):
     fio: str
     discount_value: int
     description: Optional[str]
-    location_name:str
 
     class Config:
         orm_mode = True
@@ -24,6 +22,7 @@ class ResidentRead(BaseModel):
 class ResidentReadForCards(BaseModel):
     id: int
     fio: str
+    discount_value:int
 
 
 class ResidentUpdate(BaseModel):

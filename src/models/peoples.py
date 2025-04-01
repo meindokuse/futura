@@ -70,24 +70,21 @@ class Residents(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     fio: Mapped[str] = mapped_column(String, nullable=False)
     discount_value: Mapped[int] = mapped_column(Integer, nullable=False)
-    location_id: Mapped[int] = mapped_column(Integer, ForeignKey('location.id'), nullable=False)
     description: Mapped[Optional[str]] = mapped_column(String, nullable=True)
-
-    location = relationship("Location")
 
     def to_read_model(self) -> "ResidentRead":
         return ResidentRead(
             id=self.id,
             fio=self.fio,
             discount_value=self.discount_value,
-            location_name=self.location.name,
             description=self.description,
         )
 
     def to_read_model_for_cards(self) -> ResidentReadForCards:
         return ResidentReadForCards(
             id=self.id,
-            fio=self.fio
+            fio=self.fio,
+            discount_value=self.discount_value,
         )
 
 
