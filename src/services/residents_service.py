@@ -8,15 +8,11 @@ class ResidentsService:
             list_residents = await uow.residents.find_all_residents(page=page, limit=limit)
             return list_residents
 
-    async def get_residents_with_filter(self, uow: IUnitOfWork, fio: str, page: int, limit: int,
-                                        location_id: int = None):
+    async def get_residents_with_filter(self, uow: IUnitOfWork, fio: str, page: int, limit: int):
         async with uow:
-            if location_id is None:
-                residents = await uow.residents.find_with_filter(page=page, limit=limit, fio=fio)
-            else:
-                residents = await uow.residents.find_with_filter(page=page, limit=limit, fio=fio,
-                                                                 location_id=location_id)
-            return residents
+            residents = await uow.residents.find_with_filter(page=page, limit=limit, fio=fio)
+
+        return residents
 
     async def get_current_resident(self, uow: IUnitOfWork, id: int):
         async with uow:

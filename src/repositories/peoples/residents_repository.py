@@ -18,9 +18,7 @@ class ResidentsRepository(SQLAlchemyRepository):
         start = (page - 1) * limit
 
         # Используем func.lower для приведения к lowercase
-        stmt = (select(self.model).options(
-            selectinload(Residents.location)
-        )
+        stmt = (select(self.model)
         .filter_by(**fiter_kwargs).where(
             func.lower(self.model.fio).ilike(f"%{fio.lower()}%")
         ))
@@ -42,7 +40,6 @@ class ResidentsRepository(SQLAlchemyRepository):
     async def get_current_resident(self, id: int):
         stmt = (
             select(Residents)
-            .options(selectinload(Residents.location))  # Явно загружаем связанную таблицу Location
             .where(Residents.id == id)
         )
         res = await self.session.execute(stmt)
