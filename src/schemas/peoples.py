@@ -4,11 +4,11 @@ from typing import List, Optional
 from pydantic import BaseModel
 
 
-
 class ResidentCreate(BaseModel):
     fio: str
     discount_value: int
     description: Optional[str] = None
+
 
 class ResidentRead(BaseModel):
     id: int
@@ -19,10 +19,11 @@ class ResidentRead(BaseModel):
     class Config:
         orm_mode = True
 
+
 class ResidentReadForCards(BaseModel):
     id: int
     fio: str
-    discount_value:int
+    discount_value: int
 
 
 class ResidentUpdate(BaseModel):
@@ -30,6 +31,7 @@ class ResidentUpdate(BaseModel):
     discount_value: Optional[int] = None
     location_id: Optional[int] = None
     description: Optional[str] = None
+
 
 class EmployerCreate(BaseModel):
     email: str
@@ -41,6 +43,7 @@ class EmployerCreate(BaseModel):
     contacts: Optional[List[str]] = None
     description: Optional[str] = None
     location_id: int
+
 
 class EmployerRead(BaseModel):
     id: int
@@ -57,6 +60,7 @@ class EmployerRead(BaseModel):
     class Config:
         orm_mode = True
 
+
 class EmployerReadForValidate(BaseModel):
     id: int
     email: str
@@ -69,16 +73,17 @@ class EmployerReadForValidate(BaseModel):
 
 
 class EmployerReadForBirth(BaseModel):
-    id:int
+    id: int
     fio: str
     work_type: str
     date_of_birth: date
+
 
 class EmployerReadForCards(BaseModel):
     id: int
     fio: str
     work_type: str
-
+    roles: List[str]
 
 
 class EmployerUpdate(BaseModel):
@@ -90,6 +95,3 @@ class EmployerUpdate(BaseModel):
     contacts: Optional[List[str]] = None
     description: Optional[str] = None
     location_id: Optional[int] = None
-
-
-

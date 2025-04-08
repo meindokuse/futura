@@ -52,7 +52,8 @@ class Employer(Base):
         return EmployerReadForCards(
             id=self.id,
             fio=self.fio,
-            work_type=self.work_type
+            work_type=self.work_type,
+            roles = self.roles
         )
 
     def to_read_model_for_validate(self) -> EmployerReadForValidate:
