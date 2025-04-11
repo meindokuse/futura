@@ -7,10 +7,10 @@ from fastapi import HTTPException
 from redis.asyncio import Redis
 from fastapi import BackgroundTasks
 from src.data.unitofwork import IUnitOfWork
-from src.schemas.items import WorkDayRead
+from src.schemas.items import WorkDayRead, WorkDayFilter
 
 from src.schemas.work_day import WorkDayCreate
-
+from datetime import date
 
 class WorkService:
     async def _update_cache(self, cache_key: str, data: List[WorkDayRead], redis_client: Redis):
@@ -28,6 +28,12 @@ class WorkService:
             schedule_data = await uow.work_day.get_workdays(page=page, limit=limit, location_id=location_id)
             background_tasks.add_task(self._update_cache, cache_key, schedule_data, redis_client)
             return schedule_data
+
+    async def get_schedule_filter(self, uow: IUnitOfWork, filters: WorkDayFilter, date_filter:Optional[date] = None):
+        async with uow:
+            schedule = await uow.work_day.get_filtered(filters=filters,date_filter=date_filter)
+            return schedule
+
 
     async def get_list_workdays(self, uow: IUnitOfWork, page: int, limit: int, location_id: int):
         async with uow:
@@ -55,7 +61,7 @@ class WorkService:
             await uow.work_day.add_one(data=data)
             await uow.commit()
 
-    async def add_list_workdays(self,uow: IUnitOfWork, workdays: List[WorkDayCreate]):
+    async def add_list_workdays(self, uow: IUnitOfWork, workdays: List[WorkDayCreate]):
         data = [x.model_dump() for x in workdays]
         async with uow:
             await uow.work_day.add_all(data_list=data)

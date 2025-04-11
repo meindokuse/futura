@@ -1,12 +1,13 @@
 from datetime import date, datetime, timedelta
-from typing import List
+from typing import List, cast, Optional
 
-from sqlalchemy import func, select
-from sqlalchemy.orm import selectinload
+from sqlalchemy import func, select, and_, Date
+from sqlalchemy.orm import selectinload, joinedload
 
 from src.data.repository import SQLAlchemyRepository
 from src.models.items import WorkDay, Location
 from src.models.peoples import Employer
+from src.schemas.items import WorkDayFilter
 from src.schemas.work_day import WorkDayCreate
 
 
@@ -77,7 +78,43 @@ class WorkRepository(SQLAlchemyRepository):
         res_ready = [row[0].to_read_model() for row in result.all()]
         return res_ready
 
-    async def add_list_workdays(self,workdays: List[WorkDayCreate]):
-        stmt = select(WorkDay)
+    async def get_filtered(self, filters: WorkDayFilter,date_filter:Optional[date] = None):
+        stmt = select(WorkDay).options(
+            joinedload(WorkDay.employer),
+            joinedload(WorkDay.location)
+        )
 
+        conditions = []
 
+        # Самый простой и правильный вариант фильтрации по дате
+        if date_filter:
+            conditions.append(
+                func.date(WorkDay.work_time) == date_filter
+            )
+            # Или альтернативный вариант:
+            # conditions.append(
+            #     and_(
+            #         WorkDay.work_time >= filters.date,
+            #         WorkDay.work_time < filters.date + timedelta(days=1)
+            #     )
+            # )
+
+        # Остальные фильтры без изменений
+        if filters.employer_fio:
+            conditions.append(
+                WorkDay.employer.has(Employer.fio.ilike(f"%{filters.employer_fio}%"))
+            )
+
+        if filters.location_id:
+            conditions.append(WorkDay.location_id == filters.location_id)
+
+        if filters.work_type:
+            conditions.append(WorkDay.employer.has(Employer.work_type == filters.work_type))
+
+        if conditions:
+            stmt = stmt.where(and_(*conditions))
+
+        stmt = stmt.offset((filters.page - 1) * filters.limit).limit(filters.limit)
+
+        result = await self.session.execute(stmt)
+        return [wd.to_read_model() for wd in result.scalars().all()]

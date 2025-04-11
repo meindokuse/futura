@@ -27,7 +27,7 @@ async def list_employers(
     filter_by = {"location_id": location_id}
 
     if work_type:
-        filter_by["work_type"] = work_type
+        filter_by["work_type"] = work_type.lower()
 
     employer_service = EmployerService()
     employers = await employer_service.get_list_employers(

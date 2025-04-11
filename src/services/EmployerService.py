@@ -69,8 +69,8 @@ class EmployerService:
             # Преобразуем данные в формат, совместимый с моделью Employer
             data = {
                 "email": employer.email,
-                "fio": employer.fio,
-                "work_type": employer.work_type,
+                "fio": employer.fio.lower(),
+                "work_type": employer.work_type.lower(),
                 "roles": employer.roles,  # JSON автоматически сериализуется
                 "contacts": employer.contacts,  # JSON автоматически сериализуется
                 "description": employer.description,

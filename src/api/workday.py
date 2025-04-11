@@ -1,11 +1,12 @@
-from datetime import date
-from typing import List
+from datetime import date, datetime
+from typing import List, Optional
 
 from fastapi import APIRouter, Depends
 from redis.asyncio import Redis
 
 from src.api.dependses import IUnitOfWork, UOWDep
 from src.db.cache import get_redis
+from src.schemas.items import WorkDayFilter
 from src.schemas.work_day import WorkDayCreate
 
 from src.services.work_service import WorkService
@@ -24,8 +25,14 @@ async def get_list_workdays(
         page: int,
         limit: int,
         uow: UOWDep,
+        date: Optional[date] = None,
         redis_client: Redis = Depends(get_redis),
 ):
+    filter_by = {"location_id": location_id}
+
+    if date:
+        filter_by["work_type"] = date
+
     workday_service = WorkService()
     list_workdays = await workday_service.get_schedule(uow, page, limit, location_id, redis_client, back_tasks)
     return list_workdays
@@ -56,6 +63,30 @@ async def get_current_workdays_by_date(
     list_workdays = await workday_service.get_list_workdays_for_current_day(uow, target_date, page, limit,
                                                                             location_id)
     return list_workdays
+
+
+@router.get("/get_workday_filter")
+async def get_workdays(
+        uow: UOWDep,
+        date: Optional[date] = None,
+        employer_fio: Optional[str] = None,
+        location_id: Optional[int] = None,
+        work_type: Optional[str] = None,
+        page: int = 1,
+        limit: int = 10,
+):
+
+
+    workday_service = WorkService()
+    filters = WorkDayFilter(
+        employer_fio=employer_fio,
+        location_id=location_id,
+        work_type=work_type.lower(),
+        page=page,
+        limit=limit
+    )
+
+    return await workday_service.get_schedule_filter(uow,filters,date)
 
 
 @router.post('/add_workday')

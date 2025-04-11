@@ -93,3 +93,15 @@ class LocationUpdate(BaseModel):
     name: Optional[str] = None
     address: Optional[str] = None
     description: Optional[str] = None
+
+
+
+# ПРИВАТНАЯ СХЕМА
+
+class WorkDayFilter(BaseModel):
+    employer_fio: Optional[str] = None
+    location_id: Optional[int] = None
+    work_type: Optional[str] = None
+    page: int = 1
+    limit: int = 10
+
