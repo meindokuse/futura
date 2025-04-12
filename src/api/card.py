@@ -22,8 +22,8 @@ async def add_card(uow: UOWDep, card: CardCreate):
     }
 
 
-@router.get('/get_list_products/')
-async def get_list_products(uow: UOWDep, page: int, limit: int,
+@router.get('/get_list_cards/')
+async def get_list_cards(uow: UOWDep, page: int, limit: int,
                             type_product: Optional[str] = None, location_id: Optional[int] = None):
     card_service = CardService()
 

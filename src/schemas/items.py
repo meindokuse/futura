@@ -105,3 +105,11 @@ class WorkDayFilter(BaseModel):
     page: int = 1
     limit: int = 10
 
+
+class EventFilter(BaseModel):
+    name: Optional[str] = None
+    page: int = 1
+    location_id: Optional[int] = None
+    limit: int = 10
+
+

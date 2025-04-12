@@ -1,7 +1,7 @@
 import datetime
 
 from src.data.unitofwork import IUnitOfWork
-from src.schemas.items import EventCreate
+from src.schemas.items import EventCreate, EventFilter
 
 
 class EventService:
@@ -21,6 +21,11 @@ class EventService:
         async with uow:
             list_events = await uow.event.get_events_by_date(page=page, limit=limit, target_date=date,
                                                              location_id=location_id)
+            return list_events
+
+    async def get_events_filters(self, uow: IUnitOfWork, filters: EventFilter, date_filter: datetime.date):
+        async with uow:
+            list_events = await uow.event.get_event_with_filters(filters=filters, date_filter=date_filter)
             return list_events
 
     async def get_latest_event(self, uow: IUnitOfWork):

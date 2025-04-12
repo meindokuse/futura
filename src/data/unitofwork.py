@@ -12,13 +12,13 @@ from src.repositories.items.work_repository import WorkRepository
 
 # https://github1s.com/cosmicpython/code/tree/chapter_06_uow
 class IUnitOfWork(ABC):
-    residents: Type[ResidentsRepository]
-    employers: Type[EmployerRepository]
+    residents: ResidentsRepository
+    employers: EmployerRepository
 
-    work_day: Type[WorkRepository]
-    card: Type[CardRepository]
-    event: Type[EventRepository]
-    location: Type[LocationRepository]
+    work_day: WorkRepository
+    card: CardRepository
+    event: EventRepository
+    location: LocationRepository
 
     @abstractmethod
     def __init__(self):
@@ -41,7 +41,7 @@ class IUnitOfWork(ABC):
         ...
 
 
-class UnitOfWork:
+class UnitOfWork(IUnitOfWork):
     def __init__(self):
         self.session_factory = async_session_maker
 
@@ -54,6 +54,8 @@ class UnitOfWork:
         self.card = CardRepository(self.session)
         self.event = EventRepository(self.session)
         self.location = LocationRepository(self.session)
+
+        return self
 
     async def __aexit__(self, *args):
         await self.rollback()

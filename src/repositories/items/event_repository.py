@@ -1,11 +1,13 @@
 from datetime import date, datetime, timedelta
+from typing import Optional
 
-from sqlalchemy import select
-from sqlalchemy.orm import selectinload
+from sqlalchemy import select, func, and_
+from sqlalchemy.orm import selectinload, joinedload
 
 from src.data.repository import SQLAlchemyRepository
 
 from src.models.items import Events, Location
+from src.schemas.items import EventFilter
 
 
 class EventRepository(SQLAlchemyRepository):
@@ -85,3 +87,39 @@ class EventRepository(SQLAlchemyRepository):
 
         res_ready = [row[0].to_read_model_second() for row in result.all()]
         return res_ready
+
+    async def get_event_with_filters(self, filters: EventFilter, date_filter: Optional[date] = None):
+        stmt = (
+            select(self.model)
+            .options(joinedload(self.model.location))
+            .order_by(self.model.date_start.asc())
+        )
+
+        conditions = []
+
+        # Фильтр по дате
+        if date_filter and isinstance(date_filter, date):
+            conditions.append(func.date(self.model.date_start) == date_filter)
+        else:
+            # Если дата не задана, показываем только актуальные события (начиная с сегодня)
+            conditions.append(func.date(self.model.date_start) >= date.today())
+
+        # Фильтр по названию события
+        if filters.name:
+            conditions.append(self.model.name.ilike(f"%{filters.name}%"))
+
+        # Фильтр по location_id (включая None)
+        if hasattr(filters, 'location_id'):
+            if filters.location_id is not None:
+                conditions.append(self.model.location_id == filters.location_id)
+            else:
+                conditions.append(self.model.location_id.is_(None))
+
+        if conditions:
+            stmt = stmt.where(and_(*conditions))
+
+        stmt = stmt.offset((filters.page - 1) * filters.limit).limit(filters.limit)
+
+        result = await self.session.execute(stmt)
+        events = result.scalars().all()
+        return [ev.to_read_model() for ev in events] if events else []

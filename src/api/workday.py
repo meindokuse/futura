@@ -18,51 +18,51 @@ router = APIRouter(
 )
 
 
-@router.get('/get_list_workdays')
-async def get_list_workdays(
-        back_tasks: BackgroundTasks,
-        location_id: int,
-        page: int,
-        limit: int,
-        uow: UOWDep,
-        date: Optional[date] = None,
-        redis_client: Redis = Depends(get_redis),
-):
-    filter_by = {"location_id": location_id}
-
-    if date:
-        filter_by["work_type"] = date
-
-    workday_service = WorkService()
-    list_workdays = await workday_service.get_schedule(uow, page, limit, location_id, redis_client, back_tasks)
-    return list_workdays
-
-
-@router.get('/get_workdays_by_fio')
-async def get_current_workdays_by_fio(
-        location_id: int,
-        fio: str,
-        page: int,
-        limit: int,
-        uow: UOWDep
-):
-    workday_service = WorkService()
-    list_workdays = await workday_service.get_list_workdays_for_current_employer(uow, fio, page, limit, location_id)
-    return list_workdays
-
-
-@router.get('/get_workday_by_date')
-async def get_current_workdays_by_date(
-        location_id: int,
-        target_date: date,
-        page: int,
-        limit: int,
-        uow: UOWDep
-):
-    workday_service = WorkService()
-    list_workdays = await workday_service.get_list_workdays_for_current_day(uow, target_date, page, limit,
-                                                                            location_id)
-    return list_workdays
+# @router.get('/get_list_workdays')
+# async def get_list_workdays(
+#         back_tasks: BackgroundTasks,
+#         location_id: int,
+#         page: int,
+#         limit: int,
+#         uow: UOWDep,
+#         date: Optional[date] = None,
+#         redis_client: Redis = Depends(get_redis),
+# ):
+#     filter_by = {"location_id": location_id}
+#
+#     if date:
+#         filter_by["work_type"] = date
+#
+#     workday_service = WorkService()
+#     list_workdays = await workday_service.get_schedule(uow, page, limit, location_id, redis_client, back_tasks)
+#     return list_workdays
+#
+#
+# @router.get('/get_workdays_by_fio')
+# async def get_current_workdays_by_fio(
+#         location_id: int,
+#         fio: str,
+#         page: int,
+#         limit: int,
+#         uow: UOWDep
+# ):
+#     workday_service = WorkService()
+#     list_workdays = await workday_service.get_list_workdays_for_current_employer(uow, fio, page, limit, location_id)
+#     return list_workdays
+#
+#
+# @router.get('/get_workday_by_date')
+# async def get_current_workdays_by_date(
+#         location_id: int,
+#         target_date: date,
+#         page: int,
+#         limit: int,
+#         uow: UOWDep
+# ):
+#     workday_service = WorkService()
+#     list_workdays = await workday_service.get_list_workdays_for_current_day(uow, target_date, page, limit,
+#                                                                             location_id)
+#     return list_workdays
 
 
 @router.get("/get_workday_filter")
@@ -81,7 +81,7 @@ async def get_workdays(
     filters = WorkDayFilter(
         employer_fio=employer_fio,
         location_id=location_id,
-        work_type=work_type.lower(),
+        work_type=work_type.lower() if work_type else None,
         page=page,
         limit=limit
     )
@@ -99,7 +99,7 @@ async def add_workday(
     await workday_service.add_employers_to_work(uow, workday)
 
 @router.post('/add_list_workdays')
-async def add_workday(
+async def add_workdays_list(
         workdays: List[WorkDayCreate],
         uow: UOWDep
 ):

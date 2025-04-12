@@ -4,7 +4,7 @@ from fastapi import APIRouter
 from src.api.dependses import UOWDep
 from datetime import date
 
-from src.schemas.items import EventCreate
+from src.schemas.items import EventCreate, EventFilter
 from src.services.event_service import EventService
 from src.utils.notify import send_message_to_bot
 import asyncio
@@ -15,41 +15,63 @@ router = APIRouter(
 )
 
 
-@router.get('/get_not_actually_events')
-async def get_not_actually_events(
+# @router.get('/get_not_actually_events')
+# async def get_not_actually_events(
+#         uow: UOWDep,
+#         page: int,
+#         limit: int,
+#         location_id: Optional[int] = None,
+# ):
+#     events_service = EventService()
+#     events = await events_service.get_not_actually_events(uow, page, limit, location_id)
+#     return events
+#
+#
+# @router.get("/get_events")
+# async def get_events(
+#         uow: UOWDep,
+#         page: int,
+#         limit: int,
+#         location_id: Optional[int] = None,
+# ):
+#     events_service = EventService()
+#     events = await events_service.get_event_list(uow, page, limit, location_id)
+#     return events
+#
+#
+# @router.get('/get_events_by_date')
+# async def get_events_by_date(
+#         uow: UOWDep,
+#         page: int,
+#         limit: int,
+#         target_date: date,
+#         location_id: Optional[int] = None,
+# ):
+#     events_service = EventService()
+#     events = await events_service.get_event_list_by_date(uow, page, limit, target_date, location_id)
+#     return events
+
+@router.get('/get_events_with_filters')
+async def get_events_with_filters(
         uow: UOWDep,
         page: int,
         limit: int,
+        target_date: Optional[date] = None,
+        name:Optional[str] = None,
         location_id: Optional[int] = None,
 ):
     events_service = EventService()
-    events = await events_service.get_not_actually_events(uow, page, limit, location_id)
+    filters = EventFilter(
+        page=page,
+        limit=limit,
+        location_id=location_id,
+        name=name,
+    )
+    events = await events_service.get_events_filters(uow, filters, target_date)
     return events
 
 
-@router.get("/get_events")
-async def get_events(
-        uow: UOWDep,
-        page: int,
-        limit: int,
-        location_id: Optional[int] = None,
-):
-    events_service = EventService()
-    events = await events_service.get_event_list(uow, page, limit, location_id)
-    return events
 
-
-@router.get('/get_events_by_date')
-async def get_events_by_date(
-        uow: UOWDep,
-        page: int,
-        limit: int,
-        target_date: date,
-        location_id: Optional[int] = None,
-):
-    events_service = EventService()
-    events = await events_service.get_event_list_by_date(uow, page, limit, target_date, location_id)
-    return events
 
 
 @router.get('/get_latest')
