@@ -1,5 +1,5 @@
 from src.data.unitofwork import IUnitOfWork
-from src.schemas.peoples import ResidentCreate
+from src.schemas.peoples import ResidentCreate, ResidentUpdate
 
 
 class ResidentsService:
@@ -31,3 +31,10 @@ class ResidentsService:
         async with uow:
             await uow.residents.delete_one(id=id)
             await uow.commit()
+
+    async def update_resident(self,uow: IUnitOfWork, resident: ResidentUpdate,id:int):
+        dict_resident = resident.model_dump()
+        async with uow:
+            await uow.residents.edit_one(id=id, data=dict_resident)
+            await uow.commit()
+            return id

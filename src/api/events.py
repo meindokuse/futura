@@ -4,7 +4,7 @@ from fastapi import APIRouter
 from src.api.dependses import UOWDep
 from datetime import date
 
-from src.schemas.items import EventCreate, EventFilter
+from src.schemas.items import EventCreate, EventFilter, EventsUpdate
 from src.services.event_service import EventService
 from src.utils.notify import send_message_to_bot
 import asyncio
@@ -57,7 +57,7 @@ async def get_events_with_filters(
         page: int,
         limit: int,
         target_date: Optional[date] = None,
-        name:Optional[str] = None,
+        name: Optional[str] = None,
         location_id: Optional[int] = None,
 ):
     events_service = EventService()
@@ -69,9 +69,6 @@ async def get_events_with_filters(
     )
     events = await events_service.get_events_filters(uow, filters, target_date)
     return events
-
-
-
 
 
 @router.get('/get_latest')
@@ -107,6 +104,19 @@ async def delete_event(
 ):
     events_service = EventService()
     await events_service.delete_event(uow, id)
+    return {
+        "status": "success",
+    }
+
+
+@router.put("/update_event")
+async def update_event(
+        id: int,
+        event: EventsUpdate,
+        uow: UOWDep
+):
+    events_service = EventService()
+    await events_service.update_event(uow, id, event)
     return {
         "status": "success",
     }

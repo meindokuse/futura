@@ -29,7 +29,6 @@ class ResidentReadForCards(BaseModel):
 class ResidentUpdate(BaseModel):
     fio: Optional[str] = None
     discount_value: Optional[int] = None
-    location_id: Optional[int] = None
     description: Optional[str] = None
 
 

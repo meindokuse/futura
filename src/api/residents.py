@@ -3,7 +3,7 @@ from typing import Optional
 from fastapi import APIRouter
 
 from src.api.dependses import UOWDep
-from src.schemas.peoples import ResidentCreate
+from src.schemas.peoples import ResidentCreate, ResidentUpdate
 from src.services.residents_service import ResidentsService
 
 router = APIRouter(
@@ -45,3 +45,11 @@ async def delete_resident(id: int, uow: UOWDep):
     return {
         "status": "ok",
     }
+
+@router.put('/update_resident')
+async def update_resident(id:int,resident: ResidentUpdate, uow: UOWDep):
+    await ResidentsService().update_resident(uow,resident,id)
+    return {
+        "status": "ok",
+    }
+

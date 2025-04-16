@@ -1,7 +1,7 @@
 import datetime
 
 from src.data.unitofwork import IUnitOfWork
-from src.schemas.items import EventCreate, EventFilter
+from src.schemas.items import EventCreate, EventFilter, EventsUpdate
 
 
 class EventService:
@@ -43,4 +43,10 @@ class EventService:
     async def delete_event(self, uow: IUnitOfWork, id: int):
         async with uow:
             await uow.event.delete_one(id=id)
+            await uow.commit()
+
+    async def update_event(self, uow: IUnitOfWork, id: int, event: EventsUpdate):
+        data = event.model_dump()
+        async with uow:
+            await uow.event.edit_one(id,data )
             await uow.commit()
