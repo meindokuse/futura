@@ -9,7 +9,7 @@ from fastapi import BackgroundTasks
 from src.data.unitofwork import IUnitOfWork
 from src.schemas.items import WorkDayRead, WorkDayFilter
 
-from src.schemas.work_day import WorkDayCreate
+from src.schemas.work_day import WorkDayCreate, WorkDayUpdate
 from datetime import date
 
 class WorkService:
@@ -70,4 +70,10 @@ class WorkService:
     async def delete_work_day(self, uow: IUnitOfWork, id: int):
         async with uow:
             await uow.work_day.delete_one(id=id)
+            await uow.commit()
+
+    async def update_work_day(self, uow: IUnitOfWork, id: int, data: WorkDayUpdate):
+        data = data.model_dump()
+        async with uow:
+            await uow.work_day.edit_one(id,data)
             await uow.commit()

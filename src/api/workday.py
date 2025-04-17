@@ -6,8 +6,9 @@ from redis.asyncio import Redis
 
 from src.api.dependses import IUnitOfWork, UOWDep
 from src.db.cache import get_redis
+from src.models.items import WorkDay
 from src.schemas.items import WorkDayFilter
-from src.schemas.work_day import WorkDayCreate
+from src.schemas.work_day import WorkDayCreate, WorkDayUpdate
 
 from src.services.work_service import WorkService
 from fastapi import BackgroundTasks
@@ -75,8 +76,6 @@ async def get_workdays(
         page: int = 1,
         limit: int = 10,
 ):
-
-
     workday_service = WorkService()
     filters = WorkDayFilter(
         employer_fio=employer_fio,
@@ -86,7 +85,7 @@ async def get_workdays(
         limit=limit
     )
 
-    return await workday_service.get_schedule_filter(uow,filters,date)
+    return await workday_service.get_schedule_filter(uow, filters, date)
 
 
 @router.post('/add_workday')
@@ -98,6 +97,7 @@ async def add_workday(
     workday_service = WorkService()
     await workday_service.add_employers_to_work(uow, workday)
 
+
 @router.post('/add_list_workdays')
 async def add_workdays_list(
         workdays: List[WorkDayCreate],
@@ -107,7 +107,17 @@ async def add_workdays_list(
     workday_service = WorkService()
     await workday_service.add_list_workdays(uow, workdays)
 
+
 @router.delete('/delete_workday')
 async def delete_workday(uow: UOWDep, id: int):
     workday_service = WorkService()
     await workday_service.delete_work_day(uow, id)
+
+
+@router.put('/update_workday')
+async def update_workday(
+        workday_update: WorkDayUpdate,
+        uow: UOWDep,
+):
+    workday_service = WorkService()
+    await workday_service.update_work_day(uow, workday_update.id, workday_update)

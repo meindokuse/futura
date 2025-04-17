@@ -39,3 +39,4 @@ async def delete_product(uow: UOWDep, id: int):
     return {
         "status": "success",
     }
+

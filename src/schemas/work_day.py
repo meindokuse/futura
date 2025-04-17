@@ -15,3 +15,10 @@ class WorkDayCreate(BaseModel):
         if self.work_time.tzinfo is not None:
             self.work_time = self.work_time.replace(tzinfo=None)  # Убираем информацию о часовом поясе
         return self
+
+class WorkDayUpdate(BaseModel):
+    id:int
+    work_time: Optional[datetime] = None
+    location_id: Optional[int] = None
+    time_end: Optional[time] = None
+
