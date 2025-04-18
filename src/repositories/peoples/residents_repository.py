@@ -1,3 +1,5 @@
+from typing import Optional
+
 from sqlalchemy import select, func
 from sqlalchemy.orm import selectinload
 
@@ -12,16 +14,18 @@ class ResidentsRepository(SQLAlchemyRepository):
             self,
             page: int,  # Смещение для пагинации
             limit: int,  # Лимит записей на страницу
-            fio: str,  # ФИО для фильтрации
-            **fiter_kwargs
+            fio: Optional[str] = None,  # ФИО для фильтрации
     ):
         start = (page - 1) * limit
 
         # Используем func.lower для приведения к lowercase
-        stmt = (select(self.model)
-        .filter_by(**fiter_kwargs).where(
-            func.lower(self.model.fio).ilike(f"%{fio.lower()}%")
-        ))
+        if fio is not None:
+            stmt = (select(self.model)
+            .where(
+                func.lower(self.model.fio).ilike(f"%{fio.lower()}%")
+            ))
+        else:
+            stmt = (select(self.model))
 
         stmt = stmt.offset(start).limit(limit)
 
@@ -34,7 +38,7 @@ class ResidentsRepository(SQLAlchemyRepository):
         stmt = select(Residents)
         stmt = stmt.offset(start).limit(limit)
         res = await self.session.execute(stmt)
-        res = [row[0].to_read_model_for_cards() for row in res.all()]
+        res = [row[0].to_read_model() for row in res.all()]
         return res
 
     async def get_current_resident(self, id: int):

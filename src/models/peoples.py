@@ -81,11 +81,3 @@ class Residents(Base):
             description=self.description,
         )
 
-    def to_read_model_for_cards(self) -> ResidentReadForCards:
-        return ResidentReadForCards(
-            id=self.id,
-            fio=self.fio,
-            discount_value=self.discount_value,
-        )
-
-

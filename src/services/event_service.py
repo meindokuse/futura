@@ -48,5 +48,5 @@ class EventService:
     async def update_event(self, uow: IUnitOfWork, id: int, event: EventsUpdate):
         data = event.model_dump()
         async with uow:
-            await uow.event.edit_one(id,data )
+            await uow.event.update_event(data,id)
             await uow.commit()

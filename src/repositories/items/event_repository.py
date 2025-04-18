@@ -1,7 +1,7 @@
 from datetime import date, datetime, timedelta
 from typing import Optional
 
-from sqlalchemy import select, func, and_
+from sqlalchemy import select, func, and_, update
 from sqlalchemy.orm import selectinload, joinedload
 
 from src.data.repository import SQLAlchemyRepository
@@ -123,3 +123,8 @@ class EventRepository(SQLAlchemyRepository):
         result = await self.session.execute(stmt)
         events = result.scalars().all()
         return [ev.to_read_model() for ev in events] if events else []
+
+    async def update_event(self,data:dict,id:int):
+        stmt = update(self.model).values(data).filter_by(id=id).returning(self.model.id)
+        res = await self.session.execute(stmt)
+        return res.scalar_one()

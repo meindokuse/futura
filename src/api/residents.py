@@ -19,7 +19,7 @@ async def get_list_residents(page: int, limit: int, uow: UOWDep):
 
 
 @router.get('/get_residents_by_filters')
-async def get_residents_by_filters(page: int, limit: int, fio: str, uow: UOWDep):
+async def get_residents_by_filters(uow: UOWDep,page: int, limit: int, fio: Optional[str] = None):
     residents = await ResidentsService().get_residents_with_filter(uow, fio, page, limit)
     return residents
 

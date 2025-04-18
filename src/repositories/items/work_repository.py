@@ -78,32 +78,29 @@ class WorkRepository(SQLAlchemyRepository):
         res_ready = [row[0].to_read_model() for row in result.all()]
         return res_ready
 
-    async def get_filtered(self, filters: WorkDayFilter,date_filter:Optional[date] = None):
+    from datetime import date, datetime
+    from typing import Optional
+    from sqlalchemy import select, func, and_
+    from sqlalchemy.orm import joinedload
+
+    async def get_filtered(self, filters: WorkDayFilter, date_filter: Optional[date] = None):
         stmt = select(WorkDay).options(
-            joinedload(WorkDay.employer),
-            joinedload(WorkDay.location)
+            joinedload(WorkDay.employer)
         )
 
         conditions = []
 
-        # Самый простой и правильный вариант фильтрации по дате
+        # Фильтр по дате (основное изменение)
         if date_filter:
-            conditions.append(
-                func.date(WorkDay.work_time) == date_filter
-            )
-            # Или альтернативный вариант:
-            # conditions.append(
-            #     and_(
-            #         WorkDay.work_time >= filters.date,
-            #         WorkDay.work_time < filters.date + timedelta(days=1)
-            #     )
-            # )
+            # Если дата передана - ищем смены на конкретную дату
+            conditions.append(func.date(WorkDay.work_time) == date_filter)
+        else:
+            # Если дата НЕ передана - показываем актуальное расписание (с сегодняшнего дня)
+            conditions.append(func.date(WorkDay.work_time) >= date.today())
 
-        # Остальные фильтры без изменений
+        # Остальные фильтры
         if filters.employer_fio:
-            conditions.append(
-                WorkDay.employer.has(Employer.fio.ilike(f"%{filters.employer_fio}%"))
-            )
+            conditions.append(WorkDay.employer.has(Employer.fio.ilike(f"%{filters.employer_fio}%")))
 
         if filters.location_id:
             conditions.append(WorkDay.location_id == filters.location_id)
@@ -114,6 +111,8 @@ class WorkRepository(SQLAlchemyRepository):
         if conditions:
             stmt = stmt.where(and_(*conditions))
 
+        # Сортировка и пагинация
+        stmt = stmt.order_by(WorkDay.work_time.asc())
         stmt = stmt.offset((filters.page - 1) * filters.limit).limit(filters.limit)
 
         result = await self.session.execute(stmt)

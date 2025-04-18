@@ -58,7 +58,6 @@ class WorkDayRead(BaseModel):
     work_time: datetime
     employer_fio: str  # ФИО из таблицы Employer
     employer_work_type: str  # Должность из Employer (work_type)
-    location_name: str  # Название локации из Location
     time_end: time
 
     class Config:

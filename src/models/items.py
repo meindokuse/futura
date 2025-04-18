@@ -80,7 +80,6 @@ class WorkDay(Base):
             work_time=self.work_time,
             employer_fio=self.employer.fio,
             employer_work_type=self.employer.work_type,
-            location_name=self.location.name,
             time_end=self.time_end,
         )
 
