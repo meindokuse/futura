@@ -7,14 +7,10 @@ from src.schemas.items import CardCreate
 class CardService:
 
     async def get_list_cards(self, uow: IUnitOfWork, page: int, limit: int,
-                                category: Optional[str], location_id: int):
+                                title: Optional[str], location_id: Optional[int]):
         async with uow:
-            if category is None:
-                cards = await uow.card.find_all(page=page, limit=limit, location_id=location_id)
-            else:
-                cards = await uow.card.find_all(page=page, limit=limit, category=category,
-                                                      location_id=location_id)
-            return cards
+            manuals = await uow.card.find_cards_with_filter(page,limit,title, location_id)
+            return manuals
 
     async def add_card(self, uow: IUnitOfWork, product: CardCreate):
         data = product.model_dump()

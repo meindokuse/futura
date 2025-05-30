@@ -85,12 +85,16 @@ class EmployerReadForCards(BaseModel):
     roles: List[str]
 
 
-class EmployerUpdate(BaseModel):
-    email: Optional[str] = None
-    hashed_password: Optional[str] = None
+class EmployerUpdateAdmin(BaseModel):
     roles: Optional[List[str]] = None
     fio: Optional[str] = None
     work_type: Optional[str] = None
     contacts: Optional[List[str]] = None
     description: Optional[str] = None
     location_id: Optional[int] = None
+
+class EmployerUpdateBasic(BaseModel):
+    fio: Optional[str] = None
+    contacts: Optional[List[str]] = None
+    description: Optional[str] = None
+

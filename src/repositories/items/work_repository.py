@@ -1,14 +1,14 @@
 from datetime import date, datetime, timedelta
 from typing import List, cast, Optional
-
 from sqlalchemy import func, select, and_, Date
 from sqlalchemy.orm import selectinload, joinedload
-
 from src.data.repository import SQLAlchemyRepository
 from src.models.items import WorkDay, Location
 from src.models.peoples import Employer
 from src.schemas.items import WorkDayFilter
 from src.schemas.work_day import WorkDayCreate
+from datetime import date, datetime
+from typing import Optional
 
 
 class WorkRepository(SQLAlchemyRepository):
@@ -78,11 +78,6 @@ class WorkRepository(SQLAlchemyRepository):
         res_ready = [row[0].to_read_model() for row in result.all()]
         return res_ready
 
-    from datetime import date, datetime
-    from typing import Optional
-    from sqlalchemy import select, func, and_
-    from sqlalchemy.orm import joinedload
-
     async def get_filtered(self, filters: WorkDayFilter, date_filter: Optional[date] = None):
         stmt = select(WorkDay).options(
             joinedload(WorkDay.employer)
@@ -117,3 +112,13 @@ class WorkRepository(SQLAlchemyRepository):
 
         result = await self.session.execute(stmt)
         return [wd.to_read_model() for wd in result.scalars().all()]
+
+    async def get_week_schedule(self, week: date, user_id: int):
+        delta_date = week + timedelta(days=7)
+        stmt = select(self.model).options(
+            joinedload(self.model.location)
+        )
+        stmt = stmt.where(self.model.work_time >= week, self.model.work_time <= delta_date,
+                          self.model.employer_id == user_id)
+        result = await self.session.execute(stmt)
+        return [wd.to_read_for_profile() for wd in result.scalars().all()]

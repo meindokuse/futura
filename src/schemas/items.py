@@ -6,18 +6,16 @@ from pydantic import BaseModel
 
 
 class CardCreate(BaseModel):
-    name: str
+    title: str
     description: str
-    category: str
     exp: str
     location_id: int
 
 
 class CardRead(BaseModel):
     id: int
-    name: str
+    title: str
     description: str
-    category: str
     exp: str
     location_id: int
 
@@ -70,6 +68,12 @@ class WorkDayRead(BaseModel):
             if isinstance(value, (datetime, time)):  # Если значение — это datetime или time
                 data[key] = value.isoformat()  # Преобразуем в строку в формате ISO
         return data
+
+class WorkDayProfileRead(BaseModel):
+    id: int
+    work_time: datetime
+    time_end: time
+    location_name: str
 
 
 class LocationCreate(BaseModel):

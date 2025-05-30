@@ -1,69 +1,17 @@
 from datetime import date, datetime
 from typing import List, Optional
-
 from fastapi import APIRouter, Depends
 from redis.asyncio import Redis
-
 from src.api.dependses import IUnitOfWork, UOWDep
-from src.db.cache import get_redis
-from src.models.items import WorkDay
 from src.schemas.items import WorkDayFilter
 from src.schemas.work_day import WorkDayCreate, WorkDayUpdate
-
 from src.services.work_service import WorkService
-from fastapi import BackgroundTasks
+from src.utils.jwt_tokens import user_dep
 
 router = APIRouter(
     tags=['workdays'],
     prefix='/workdays',
 )
-
-
-# @router.get('/get_list_workdays')
-# async def get_list_workdays(
-#         back_tasks: BackgroundTasks,
-#         location_id: int,
-#         page: int,
-#         limit: int,
-#         uow: UOWDep,
-#         date: Optional[date] = None,
-#         redis_client: Redis = Depends(get_redis),
-# ):
-#     filter_by = {"location_id": location_id}
-#
-#     if date:
-#         filter_by["work_type"] = date
-#
-#     workday_service = WorkService()
-#     list_workdays = await workday_service.get_schedule(uow, page, limit, location_id, redis_client, back_tasks)
-#     return list_workdays
-#
-#
-# @router.get('/get_workdays_by_fio')
-# async def get_current_workdays_by_fio(
-#         location_id: int,
-#         fio: str,
-#         page: int,
-#         limit: int,
-#         uow: UOWDep
-# ):
-#     workday_service = WorkService()
-#     list_workdays = await workday_service.get_list_workdays_for_current_employer(uow, fio, page, limit, location_id)
-#     return list_workdays
-#
-#
-# @router.get('/get_workday_by_date')
-# async def get_current_workdays_by_date(
-#         location_id: int,
-#         target_date: date,
-#         page: int,
-#         limit: int,
-#         uow: UOWDep
-# ):
-#     workday_service = WorkService()
-#     list_workdays = await workday_service.get_list_workdays_for_current_day(uow, target_date, page, limit,
-#                                                                             location_id)
-#     return list_workdays
 
 
 @router.get("/get_workday_filter")
@@ -88,6 +36,12 @@ async def get_workdays(
     return await workday_service.get_schedule_filter(uow, filters, date)
 
 
+@router.get('/get_week_schedule')
+async def get_week_schedule(week: date, uow: UOWDep, user:user_dep):
+    workday_service = WorkService()
+    return await workday_service.get_week_schedule(week, uow, int(user.id))
+
+
 @router.post('/add_workday')
 async def add_workday(
         workday: WorkDayCreate,
@@ -98,7 +52,7 @@ async def add_workday(
     await workday_service.add_employers_to_work(uow, workday)
 
 
-@router.post('/add_list_workdays')
+@router.post('/admin/add_list_workdays')
 async def add_workdays_list(
         workdays: List[WorkDayCreate],
         uow: UOWDep
@@ -108,13 +62,13 @@ async def add_workdays_list(
     await workday_service.add_list_workdays(uow, workdays)
 
 
-@router.delete('/delete_workday')
+@router.delete('/admin/delete_workday')
 async def delete_workday(uow: UOWDep, id: int):
     workday_service = WorkService()
     await workday_service.delete_work_day(uow, id)
 
 
-@router.put('/update_workday')
+@router.put('/admin/update_workday')
 async def update_workday(
         workday_update: WorkDayUpdate,
         uow: UOWDep,

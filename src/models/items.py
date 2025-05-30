@@ -7,14 +7,14 @@ from sqlalchemy.orm import mapped_column, Mapped, relationship
 from src.schemas.items import EventRead, WorkDayRead, LocationRead, CardRead
 from src.db.database import Base
 from src.schemas.items import EventReadMain
+from src.schemas.items import WorkDayProfileRead
 
 
 class Card(Base):
     __tablename__ = 'cards'
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    name: Mapped[str] = mapped_column(String, nullable=False)
+    title: Mapped[str] = mapped_column(String, nullable=False)
     description: Mapped[str] = mapped_column(String, nullable=False)
-    category: Mapped[str] = mapped_column(String, nullable=False)
     exp: Mapped[str] = mapped_column(String, nullable=False)
     location_id: Mapped[int] = mapped_column(Integer, ForeignKey('location.id'), nullable=True)
 
@@ -23,10 +23,10 @@ class Card(Base):
     def to_read_model(self) -> "CardRead":
         return CardRead(
             id=self.id,
-            name=self.name,
+            title=self.title,
             description=self.description,
-            category=self.category,
             location_id=self.location_id,
+            exp=self.exp
         )
 
 
@@ -81,6 +81,14 @@ class WorkDay(Base):
             employer_fio=self.employer.fio,
             employer_work_type=self.employer.work_type,
             time_end=self.time_end,
+        )
+
+    def to_read_for_profile(self) -> "WorkDayProfileRead":
+        return WorkDayProfileRead(
+            id=self.id,
+            work_time=self.work_time,
+            time_end=self.time_end,
+            location_name=self.location.name
         )
 
 

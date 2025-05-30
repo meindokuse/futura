@@ -14,9 +14,14 @@ from datetime import date
 
 class WorkService:
     async def _update_cache(self, cache_key: str, data: List[WorkDayRead], redis_client: Redis):
-        # Преобразуем каждый объект WorkDayRead в словарь и обрабатываем datetime
         dict_data = [x.model_dump_ext() for x in data]
         await redis_client.setex(cache_key, 300, json.dumps(dict_data))  # Сериализуем в JSON
+
+    async def get_week_schedule(self,week:date,uow: IUnitOfWork,user_id:int):
+        async with uow:
+            res = await uow.work_day.get_week_schedule(week, user_id)
+            return res
+
 
     async def get_schedule(self, uow: IUnitOfWork, page: int, limit: int, location_id: id, redis_client: Redis,
                            background_tasks: BackgroundTasks):

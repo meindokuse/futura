@@ -6,7 +6,7 @@ from datetime import date
 
 from src.schemas.items import EventCreate, EventFilter, EventsUpdate
 from src.services.event_service import EventService
-from src.utils.notify import send_message_to_bot
+from src.utils.message_manager import MessageManager
 import asyncio
 
 router = APIRouter(
@@ -80,7 +80,7 @@ async def get_latest(
     return event
 
 
-@router.post("/create_event")
+@router.post("/admin/create_event")
 async def create_event(
         event: EventCreate,
         uow: UOWDep
@@ -90,14 +90,15 @@ async def create_event(
     if id:
         start = event.date_start.strftime("%d/%m/%Y, %H:%M")
         text = f'Анонсировано новое событие!\n{event.name}\nНачало: {start}\nПолная информация на нашем сайте.'
-        asyncio.create_task(send_message_to_bot(text))
+        print(f"Текст для отправки: {text}")
+        asyncio.create_task(MessageManager.send_message_to_bot(text=text))
 
     return {
         "status": "success",
     }
 
 
-@router.delete("/delete_event")
+@router.delete("/admin/delete_event")
 async def delete_event(
         id: int,
         uow: UOWDep
@@ -109,7 +110,7 @@ async def delete_event(
     }
 
 
-@router.put("/update_event")
+@router.put("/admin/update_event")
 async def update_event(
         id: int,
         event: EventsUpdate,

@@ -1,14 +1,27 @@
-from datetime import timedelta
+import random
+from datetime import timedelta, datetime
 from typing import Annotated
 
-from fastapi import APIRouter, Response, HTTPException, Depends
+import jwt
+from fastapi import APIRouter, Response, HTTPException, Depends, Request, Response
 from fastapi.security import OAuth2PasswordRequestForm
+from fastapi_mail import FastMail, MessageSchema
+from redis.asyncio import Redis
+from starlette.responses import JSONResponse
 
 from src.api.dependses import UOWDep
+from src.config import VERIFICATION_CODE_TTL
+from src.db.cache import get_redis
+from src.schemas.other_requests import EmailRequest, VerifyEmailRequest, PasswordRequest
 from src.schemas.peoples import EmployerCreate
-from src.services.EmployerService import EmployerService
+from src.services.employer_service import EmployerService
 from src.services.work_service import WorkService
-from src.utils.jwt_tokens import create_access_token, user_dep, Token
+from src.smtp_config import mail_conf
+from src.utils.jwt_tokens import create_access_token, user_dep, Token, create_tokens, REFRESH_TOKEN_COOKIE_NAME, \
+    refresh_tokens, SECRET_KEY, ALGORITHM
+from jose import jwt, JWTError
+
+from src.utils.email_manager import EmailManager
 
 router = APIRouter(
     tags=['auth'],
@@ -16,27 +29,150 @@ router = APIRouter(
 )
 
 
-@router.post('/token')
-async def login_for_get_token(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], uow: UOWDep):
-    try:
-        user = await EmployerService().authenticate(uow, form_data.username, form_data.password)
-        if not user:
-            raise HTTPException(status_code=401, detail="Incorrect email or password")
-        token = create_access_token(user.id, user.roles, user.fio, timedelta(minutes=60))
+@router.post('/token', response_model=Token)
+async def login_for_get_token(
+        response: Response,
+        request: Request,
+        form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
+        uow: UOWDep
+):
+    # try:
+    # Аутентификация пользователя
+    user = await EmployerService().authenticate(uow, form_data.username, form_data.password)
+    if not user:
+        raise HTTPException(
+            status_code=401,
+            detail="Incorrect email or password"
+        )
 
-        return {"access_token": token, "token_type": "bearer"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    client_ip = request.client.host
+    access_token, refresh_token = create_tokens(
+        user_id=str(user.id),
+        roles=user.roles,
+        ip=client_ip
+    )
+
+    # Устанавливаем ОБА токена в HTTP-only куки
+    response.set_cookie(
+        key="access_token",
+        value=access_token,
+        httponly=True,
+        secure=False,
+        samesite="lax",
+        max_age=int(timedelta(minutes=15).total_seconds())  # TTL access token
+    )
+
+    response.set_cookie(
+        key="refresh_token",
+        value=refresh_token,
+        httponly=True,
+        secure=False,
+        samesite="lax",
+        max_age=int(timedelta(days=7).total_seconds())  # TTL refresh token
+    )
+
+    return {
+        "access_token": access_token,  # Теперь возвращаем токен и в теле ответа
+        "token_type": "bearer",
+        "status": "success"
+    }
+
+
+@router.post('/refresh', response_model=Token)
+async def refresh_token_pair(
+        request: Request,
+        response: Response
+):
+    return await refresh_tokens(request, response)
 
 
 @router.get('/profile')
 async def get_profile(user: user_dep, uow: UOWDep):
-    user_data = await EmployerService().get_current_employer(uow, int(user.get('id')))
-    work_days = await WorkService().get_list_workdays_for_current_employer(uow, user.get('fio'), 1, 10,user_data.location_name)
+    user_data = await EmployerService().get_current_employer(uow, int(user.id))
     return {
         "user": user_data,
-        "work_days": work_days
     }
+
+
+@router.get('/check_admin')
+async def check_admin(request: Request):
+    token = request.cookies.get("access_token") or \
+            (request.headers.get("Authorization") and request.headers["Authorization"][7:])
+    if not token:
+        return JSONResponse(
+            status_code=401,
+            content={"detail": "Authentication required"},
+            headers={"WWW-Authenticate": "Bearer"}
+        )
+
+    payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+    roles = payload.get("roles", [])
+
+    # Проверяем наличие хотя бы одной роли, начинающейся с "admin"
+    if not any(role.startswith('admin') for role in roles):
+        raise HTTPException(
+            status_code=403,
+            detail="Admin access required"
+        )
+    return JSONResponse(
+        status_code=200,
+        content={"detail": "Admin access required"},
+    )
+
+
+@router.post("/send-verification-code")
+async def send_verification_code(
+        request: EmailRequest,  # Принимаем JSON
+        uow: UOWDep,
+        redis: Redis = Depends(get_redis)
+):
+    email = request.email  # Получаем email из JSON тела
+
+    employer_service = EmployerService()
+    is_exist = await employer_service.is_exist_email(uow, email)
+
+    if is_exist:
+        raise HTTPException(status_code=409, detail='Email already registered')
+
+    email_manager = EmailManager(email)
+    await email_manager.send_code(redis)
+    return {"message": "Код подтверждения отправлен"}
+
+
+@router.post("/verify-email")
+async def verify_email(
+        request: VerifyEmailRequest,  # Принимаем данные как JSON тело
+        user: user_dep,
+        uow: UOWDep,
+        redis: Redis = Depends(get_redis)
+):
+    # Получаем код из Redis
+    email_manager = EmailManager(request.email)
+    is_success = await email_manager.verify_email_and_code(redis, request.code)
+
+    if not is_success:
+        raise HTTPException(
+            status_code=400,
+            detail="Неверный код подтверждения"
+        )
+
+    employer_service = EmployerService()
+    await employer_service.edit_email(uow, request.email, int(user.id))
+
+    return {"message": "Email успешно изменен"}
+
+@router.post('/change-password')
+async def change_password(
+        request: PasswordRequest,
+        user: user_dep,
+        uow: UOWDep,
+):
+    employer_service = EmployerService()
+
+    await employer_service.edit_password(uow, request.current_password,request.new_password, int(user.id))
+
+    return {"message": "Email успешно изменен"}
+
 
 
 @router.post('/admin/register')
@@ -44,10 +180,12 @@ async def register(new_user: EmployerCreate, uow: UOWDep):
     id = await EmployerService().add_employer(uow, new_user)
     return {
         'status': 'success',
-        'id':id
+        'id': id
     }
 
-# @router.post("/logout")
-# async def logout(response: Response):
-#     response.delete_cookie(config.JWT_ACCESS_COOKIE_NAME)
-#     return {"message": "Logged out successfully"}
+
+@router.post("/logout")
+async def logout(response: Response):
+    response.delete_cookie('access_token')
+    response.delete_cookie('refresh_token')
+    return {"message": "Logged out successfully"}

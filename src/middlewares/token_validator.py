@@ -1,40 +1,66 @@
-from src.utils.jwt_tokens import SECRET_KEY, ALGORITHM
-
 from fastapi import Request, HTTPException
+from fastapi.responses import JSONResponse, RedirectResponse
 from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.responses import RedirectResponse, JSONResponse
 from jose import jwt, JWTError
+
+from src.utils.jwt_tokens import ALGORITHM, SECRET_KEY
 
 
 class TokenValidationMiddleware(BaseHTTPMiddleware):
-    excluded_paths = {'/auth/login', '/auth/logout'}
+    excluded_paths = {'/auth/token', '/auth/refresh', '/auth/logout', '/docs', '/favicon.ico','/openapi.json'}
 
     async def dispatch(self, request: Request, call_next):
-        # Пропуск путей, которые не требуют проверки
-        if any(request.url.path.startswith(path) for path in self.excluded_paths):
+        # Пропускаем исключенные пути
+        if request.url.path in self.excluded_paths:
+            print('Пропускаем исключенные пути')
             return await call_next(request)
 
-        token = request.headers.get("Authorization")
-        if not token or not token.startswith("Bearer "):
-            return RedirectResponse(url="/auth/login", status_code=307)
-
-        token = token[7:]  # Убираем "Bearer " из начала токена
-
         try:
-            # Валидация токена
-            payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-            fio: str = payload.get("sub")
-
-            if fio is None:
-                return JSONResponse(
+            # Получаем access_token из кук
+            access_token = request.cookies.get("access_token")
+            if not access_token:
+                print('Access token missing')
+                raise HTTPException(
                     status_code=401,
-                    content={"detail": "Unauthorized, please log in."}
+                    detail="Access token missing"
                 )
 
-        except JWTError:
+            # Декодируем и валидируем токен
+            payload = jwt.decode(access_token, SECRET_KEY, algorithms=[ALGORITHM])
+            user_id = payload.get("sub")
+            roles = payload.get("roles")
+
+            if not user_id or not roles:
+                raise HTTPException(
+                    status_code=401,
+                    detail="Invalid token payload"
+                )
+
+            # Проверка IP (если нужно)
+            if "ip" in payload:
+                client_ip = request.client.host
+                if payload["ip"] != client_ip:
+                    raise HTTPException(
+                        status_code=401,
+                        detail="IP address changed"
+                    )
+
+            # Добавляем данные пользователя в request.state для использования в роутах
+            request.state.user_id = user_id
+            request.state.roles = roles
+
+            return await call_next(request)
+
+        except jwt.ExpiredSignatureError:
             return JSONResponse(
                 status_code=401,
-                content={"detail": "Unauthorized, please log in."}
+                content={"detail": "Token expired"},
+                headers={"WWW-Authenticate": "Bearer"}
             )
 
-        return await call_next(request)
+        except (JWTError, HTTPException) as e:
+            return JSONResponse(
+                status_code=401,
+                content={"detail": str(e.detail) if hasattr(e, 'detail') else "Invalid token"},
+                headers={"WWW-Authenticate": "Bearer"}
+            )

@@ -22,17 +22,17 @@ async def add_card(uow: UOWDep, card: CardCreate):
     }
 
 
-@router.get('/get_list_cards/')
+@router.get('/get_list_cards')
 async def get_list_cards(uow: UOWDep, page: int, limit: int,
-                            type_product: Optional[str] = None, location_id: Optional[int] = None):
+                            title: Optional[str] = None, location_id: Optional[int] = None):
     card_service = CardService()
 
-    list_cards = await card_service.get_list_cards(uow=uow, page=page, limit=limit, category=type_product,
+    list_cards = await card_service.get_list_cards(uow=uow, page=page, limit=limit, title=title,
                                                          location_id=location_id)
     return list_cards
 
 
-@router.delete('/admin/delete_product')
+@router.delete('/admin/delete_card')
 async def delete_product(uow: UOWDep, id: int):
     card_service = CardService()
     await card_service.delete_card(uow=uow, id=id)

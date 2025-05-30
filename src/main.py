@@ -9,18 +9,18 @@ from src.api.card import router as product_router
 from src.api.residents import router as residents_router
 from src.api.locations import router as location_router
 from src.api.files import router as files_router
-
-
+from src.middlewares.token_validator import TokenValidationMiddleware
+from src.middlewares.admin_cheker import AdminRoleMiddleware
 app = FastAPI()
 
 
 
-# app.add_middleware(TokenValidationMiddleware)
-# app.add_middleware(AdminRoleMiddleware)
+app.add_middleware(TokenValidationMiddleware)
+app.add_middleware(AdminRoleMiddleware)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Разрешить все источники (замените на конкретный домен для безопасности)
+    allow_origins=["http://localhost:5173"],  # Разрешить все источники (замените на конкретный домен для безопасности)
     allow_credentials=True,
     allow_methods=["*"],  # Разрешить все методы
     allow_headers=["*"],  # Разрешить все заголовки

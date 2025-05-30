@@ -3,8 +3,9 @@ from typing import Optional
 from fastapi import APIRouter
 
 from src.api.dependses import UOWDep
-from src.schemas.peoples import EmployerCreate, EmployerRead, EmployerUpdate
-from src.services.EmployerService import EmployerService
+from src.schemas.peoples import EmployerCreate, EmployerRead, EmployerUpdateAdmin, EmployerUpdateBasic
+from src.services.employer_service import EmployerService
+from src.utils.jwt_tokens import user_dep
 
 router = APIRouter(
     tags=['employers'],
@@ -48,13 +49,33 @@ async def get_employer(uow: UOWDep, id: int):
     employer = await employer_service.get_current_employer(uow, id)
     return employer
 
-
 @router.put('/edit_employer')
-async def edit_employer(employer_id: int, new_data: EmployerUpdate, uow: UOWDep):
-    await EmployerService().edit_employer(uow, new_data, employer_id)
+async def edit_employer(uow:UOWDep,user:user_dep,new_data: EmployerUpdateBasic):
+    new_data_dict = new_data.model_dump()
+    await EmployerService().edit_employer(uow, new_data_dict, int(user.id))
     return {
         "status": "ok"
     }
+
+
+@router.put('/admin/edit_employer')
+async def edit_employer(employer_id: int, new_data: EmployerUpdateAdmin, uow: UOWDep):
+    new_data_dict = new_data.model_dump()
+    await EmployerService().edit_employer(uow, new_data_dict, employer_id)
+    return {
+        "status": "ok"
+    }
+
+
+@router.put('/admin/edit_password')
+async def edit_employer(employer_id: int, password: str, uow: UOWDep):
+    await EmployerService().edit_password(uow, password, employer_id)
+    return {
+        "status": "ok"
+    }
+
+
+
 
 
 @router.get('/get_list_birth')
@@ -63,7 +84,7 @@ async def get_list_birth(uow: UOWDep, page: int, limit: int):
     return list_birth
 
 
-@router.delete('/delete_employer')
+@router.delete('/admin/delete_employer')
 async def delete_employer(employer_id: int, uow: UOWDep):
     await EmployerService().delete_employer(uow, employer_id)
     return {
