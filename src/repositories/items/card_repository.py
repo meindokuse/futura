@@ -23,10 +23,9 @@ class CardRepository(SQLAlchemyRepository):
         if title:
             stmt = stmt.where(self.model.title.ilike(f'%{title}%'))
 
-        if location_id is not None:
-            stmt = stmt.where(
-                (self.model.location_id == location_id)
-            )
+        stmt = stmt.where(
+            (self.model.location_id == location_id)
+        )
 
         stmt = stmt.offset((page - 1) * limit).limit(limit)
 

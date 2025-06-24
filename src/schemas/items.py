@@ -9,7 +9,7 @@ class CardCreate(BaseModel):
     title: str
     description: str
     exp: str
-    location_id: int
+    location_id: Optional[int]
 
 
 class CardRead(BaseModel):
@@ -17,7 +17,7 @@ class CardRead(BaseModel):
     title: str
     description: str
     exp: str
-    location_id: int
+    location_id: Optional[int]
 
 
 class EventCreate(BaseModel):

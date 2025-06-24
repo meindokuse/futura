@@ -40,7 +40,10 @@ async def get_workdays(
 async def get_week_schedule(week: date, uow: UOWDep, user:user_dep):
     workday_service = WorkService()
     return await workday_service.get_week_schedule(week, uow, int(user.id))
-
+@router.get('/get_week_schedule_employer')
+async def get_week_schedule(week: date, uow: UOWDep, id:int):
+    workday_service = WorkService()
+    return await workday_service.get_week_schedule(week, uow, id)
 
 @router.post('/add_workday')
 async def add_workday(

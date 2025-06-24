@@ -75,9 +75,6 @@ async def edit_employer(employer_id: int, password: str, uow: UOWDep):
     }
 
 
-
-
-
 @router.get('/get_list_birth')
 async def get_list_birth(uow: UOWDep, page: int, limit: int):
     list_birth = await EmployerService().get_list_of_birth(uow, page, limit)
