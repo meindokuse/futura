@@ -53,10 +53,11 @@ class EventsUpdate(BaseModel):
 
 class WorkDayRead(BaseModel):
     id: int
-    work_time: datetime
+    work_date: date
     employer_fio: str  # ФИО из таблицы Employer
+    employer_id:int
     employer_work_type: str  # Должность из Employer (work_type)
-    time_end: time
+    number_work: int
 
     class Config:
         orm_mode = True  # Для работы с SQLAlchemy ORM
@@ -71,8 +72,8 @@ class WorkDayRead(BaseModel):
 
 class WorkDayProfileRead(BaseModel):
     id: int
-    work_time: datetime
-    time_end: time
+    work_date: date
+    number_work: int
     location_name: str
 
 

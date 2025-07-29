@@ -111,7 +111,7 @@ async def check_admin(request: Request):
     # Проверяем наличие хотя бы одной роли, начинающейся с "admin"
     if not any(role.startswith('admin') for role in roles):
         raise HTTPException(
-            status_code=403,
+            status_code=401,
             detail="Admin access required"
         )
     return JSONResponse(

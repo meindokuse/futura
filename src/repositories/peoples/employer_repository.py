@@ -1,6 +1,7 @@
 from operator import or_
+from typing import Optional
 
-from sqlalchemy import  case
+from sqlalchemy import case
 from sqlalchemy.orm import selectinload
 
 from src.data.repository import SQLAlchemyRepository
@@ -91,6 +92,30 @@ class EmployerRepository(SQLAlchemyRepository):
         res = res.scalar_one_or_none()
         return res.to_read_model()
 
+    async def get_employer_by_work_type(self, work_type: str, fio: Optional[str] = None):
+        stmt = select(Employer)
+        if work_type == 'хостес':
+            stmt = stmt.where(or_(
+                Employer.work_type == 'менеджер',
+                Employer.work_type == 'хостес'
+            ))
+        if work_type == 'бармен':
+            stmt = stmt.where(or_(
+                Employer.work_type == 'бармен',
+                Employer.work_type == 'помощник бармена'
+            ))
+        if work_type == 'кальянный мастер':
+            stmt = stmt.where(or_(
+                Employer.work_type == 'кальянный мастер',
+                Employer.work_type == 'помощник кальянного мастера'
+            ))
+
+        if fio is not None:
+            stmt = stmt.where(Employer.fio.ilike(f"%{fio}%"))
+        res = await self.session.execute(stmt)
+        res = [row[0].to_read_model_for_cards() for row in res.all()]
+        return res
+
     async def get_list_of_birth(self, page: int, limit: int):
         start = (page - 1) * limit
         today = date.today()
@@ -157,4 +182,3 @@ class EmployerRepository(SQLAlchemyRepository):
         res = await self.session.execute(stmt)
         res = [row[0].to_read_model_for_birth() for row in res.all()]
         return res
-

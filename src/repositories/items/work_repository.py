@@ -1,6 +1,6 @@
 from datetime import date, datetime, timedelta
 from typing import List, cast, Optional
-from sqlalchemy import func, select, and_, Date
+from sqlalchemy import func, select, and_, Date, extract
 from sqlalchemy.orm import selectinload, joinedload
 from src.data.repository import SQLAlchemyRepository
 from src.models.items import WorkDay, Location
@@ -38,77 +38,82 @@ class WorkRepository(SQLAlchemyRepository):
         res_ready = [row[0].to_read_model() for row in result.all()]
         return res_ready
 
-    async def get_workdays(self, page: int, limit: int, **filter_by):
-        today = date.today()
-        offset = (page - 1) * limit
+    async def get_workdays(self, date_now: date, **filter_by):
+        # Получаем год и месяц из date_now
+        year = date_now.year
+        month = date_now.month
 
-        stmt = (
-            select(WorkDay)
-            .options(
-                selectinload(WorkDay.employer),  # Загружаем связанный Employer
-                selectinload(WorkDay.location),  # Загружаем связанный Location
-            )
-            .filter_by(**filter_by)  # Фильтруем по атрибутам WorkDay
-            .where(WorkDay.work_time >= today)  # Дополнительный фильтр
-            .order_by(WorkDay.work_time.asc())
-            .offset(offset)
-            .limit(limit)
-        )
-
-        result = await self.session.execute(stmt)
-        res_ready = [row[0].to_read_model() for row in result.all()]
-        return res_ready
-
-    async def get_workdays_by_fio(self, fio: str, page: int, limit: int, location_id: int):
-        offset = (page - 1) * limit
-
-        stmt = (
-            select(WorkDay)
-            .options(
-                selectinload(WorkDay.employer),  # Загружаем связанный Employer
-                selectinload(WorkDay.location),  # Загружаем связанный Location
-            )
-            .where(Employer.fio == fio.lower(), WorkDay.location_id == location_id)  # Фильтр по ФИО и location_id
-            .order_by(WorkDay.work_time.asc())
-            .offset(offset)
-            .limit(limit)
-        )
-
-        result = await self.session.execute(stmt)
-        res_ready = [row[0].to_read_model() for row in result.all()]
-        return res_ready
-
-    async def get_filtered(self, filters: WorkDayFilter, date_filter: Optional[date] = None):
-        stmt = select(WorkDay).options(
-            joinedload(WorkDay.employer)
-        )
-
-        conditions = []
-
-        # Фильтр по дате (основное изменение)
-        if date_filter:
-            # Если дата передана - ищем смены на конкретную дату
-            conditions.append(func.date(WorkDay.work_time) == date_filter)
+        # Создаем диапазон дат для всего месяца
+        first_day = date(year, month, 1)
+        if month == 12:
+            last_day = date(year, month, 31)
         else:
-            # Если дата НЕ передана - показываем актуальное расписание (с сегодняшнего дня)
-            conditions.append(func.date(WorkDay.work_time) >= date.today())
+            last_day = date(year, month + 1, 1) - timedelta(days=1)
 
-        # Остальные фильтры
+        stmt = (
+            select(WorkDay)
+            .options(
+                selectinload(WorkDay.employer),
+            )
+            .filter_by(**filter_by)
+            .where(WorkDay.work_date >= first_day, WorkDay.work_date <= last_day)
+            .order_by(WorkDay.work_date.asc(), WorkDay.work_time.asc())
+        )
+
+        result = await self.session.execute(stmt)
+        res_ready = [row[0].to_read_model() for row in result.all()]
+        return res_ready
+
+    async def get_workdays_for_admin(self, date:date, location_id: int):
+
+        stmt = (
+            select(WorkDay)
+            .options(
+                selectinload(WorkDay.employer),
+            )
+            .where(WorkDay.work_date == date, WorkDay.location_id == location_id)
+        )
+        result = await self.session.execute(stmt)
+        res_ready = [row[0].to_read_model() for row in result.all()]
+        return res_ready
+
+    async def get_filtered(self, filters: WorkDayFilter, month_date: date):
+        """
+        Получает рабочие дни за указанный месяц с фильтрацией по ФИО работника
+
+        :param filters: Фильтры (только employer_fio)
+        :param month_date: Дата, по которой определяется месяц (год и месяц)
+        :return: Список рабочих дней, отсортированный по ФИО работника
+        """
+        # Определяем границы месяца
+        year = month_date.year
+        month = month_date.month
+        first_day = date(year, month, 1)
+        last_day = date(year, month + 1, 1) - timedelta(days=1) if month != 12 else date(year, 12, 31)
+
+        stmt = (
+            select(WorkDay)
+            .join(WorkDay.employer)  # Явное соединение с таблицей Employer
+            .options(
+                joinedload(WorkDay.employer),
+                joinedload(WorkDay.location)
+            )
+            .where(
+                WorkDay.work_date >= first_day,
+                WorkDay.work_date <= last_day
+            )
+        )
+
+        # Фильтр по ФИО работника (если указан)
         if filters.employer_fio:
-            conditions.append(WorkDay.employer.has(Employer.fio.ilike(f"%{filters.employer_fio}%")))
-
+            stmt = stmt.where(Employer.fio.ilike(f"%{filters.employer_fio}%"))
         if filters.location_id:
-            conditions.append(WorkDay.location_id == filters.location_id)
+            stmt = stmt.where(WorkDay.location_id == filters.location_id)
 
-        if filters.work_type:
-            conditions.append(WorkDay.employer.has(Employer.work_type == filters.work_type))
 
-        if conditions:
-            stmt = stmt.where(and_(*conditions))
 
-        # Сортировка и пагинация
-        stmt = stmt.order_by(WorkDay.work_time.asc())
-        stmt = stmt.offset((filters.page - 1) * filters.limit).limit(filters.limit)
+        # Сортировка по ФИО работника
+        stmt = stmt.order_by(Employer.fio.asc())
 
         result = await self.session.execute(stmt)
         return [wd.to_read_model() for wd in result.scalars().all()]
@@ -118,7 +123,7 @@ class WorkRepository(SQLAlchemyRepository):
         stmt = select(self.model).options(
             joinedload(self.model.location)
         )
-        stmt = stmt.where(self.model.work_time >= week, self.model.work_time <= delta_date,
+        stmt = stmt.where(self.model.work_date >= week, self.model.work_date <= delta_date,
                           self.model.employer_id == user_id)
         result = await self.session.execute(stmt)
         return [wd.to_read_for_profile() for wd in result.scalars().all()]

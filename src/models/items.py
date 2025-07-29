@@ -68,8 +68,8 @@ class WorkDay(Base):
         index=True
     )
     location_id: Mapped[int] = mapped_column(Integer, ForeignKey('location.id'), nullable=False)
-    work_time: Mapped[datetime] = mapped_column(DateTime, nullable=False)
-    time_end: Mapped[time] = mapped_column(Time, nullable=True)
+    work_date: Mapped[date] = mapped_column(Date, nullable=False)
+    number_work: Mapped[int] = mapped_column(Integer, nullable=True)
 
     employer = relationship("Employer", back_populates="workdays")  # Обратная связь
     location = relationship("Location")
@@ -77,17 +77,18 @@ class WorkDay(Base):
     def to_read_model(self) -> "WorkDayRead":
         return WorkDayRead(
             id=self.id,
-            work_time=self.work_time,
+            work_date=self.work_date,
             employer_fio=self.employer.fio,
+            employer_id=self.employer_id,
             employer_work_type=self.employer.work_type,
-            time_end=self.time_end,
+            number_work=self.number_work,
         )
 
     def to_read_for_profile(self) -> "WorkDayProfileRead":
         return WorkDayProfileRead(
             id=self.id,
-            work_time=self.work_time,
-            time_end=self.time_end,
+            work_date=self.work_date,
+            number_work=self.number_work,
             location_name=self.location.name
         )
 

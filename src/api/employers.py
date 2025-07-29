@@ -43,14 +43,22 @@ async def list_employers(
     return employers
 
 
+@router.get('/get_employer_by_work_type')
+async def get_employer_by_work_type(uow: UOWDep, work_type: str, fio: Optional[str] = None):
+    employer_service = EmployerService()
+    employers = await employer_service.get_employers_by_work_type(work_type.lower(), uow, fio)
+    return employers
+
+
 @router.get("/get_employer")
 async def get_employer(uow: UOWDep, id: int):
     employer_service = EmployerService()
     employer = await employer_service.get_current_employer(uow, id)
     return employer
 
+
 @router.put('/edit_employer')
-async def edit_employer(uow:UOWDep,user:user_dep,new_data: EmployerUpdateBasic):
+async def edit_employer(uow: UOWDep, user: user_dep, new_data: EmployerUpdateBasic):
     new_data_dict = new_data.model_dump()
     await EmployerService().edit_employer(uow, new_data_dict, int(user.id))
     return {

@@ -73,6 +73,10 @@ class EmployerService:
             )
             return list_employers
 
+    async def get_employers_by_work_type(self, work_type: str, uow: IUnitOfWork,fio:Optional[str]=None):
+        async with uow:
+            return await uow.employers.get_employer_by_work_type(work_type,fio)
+
     async def get_current_employer(self, uow: IUnitOfWork, id: int):
         async with uow:
             employer = await uow.employers.get_current_employer(id=id)
@@ -87,7 +91,7 @@ class EmployerService:
                 return False
             return employer
 
-    async def is_exist_email(self,uow: IUnitOfWork, email: str):
+    async def is_exist_email(self, uow: IUnitOfWork, email: str):
         async with uow:
             employer = await uow.employers.valid_employer(email=email)
             if not employer:
@@ -126,18 +130,18 @@ class EmployerService:
                     "contacts": employer.contacts,  # JSON автоматически сериализуется
                     "description": employer.description,
                     "hashed_password": hash_password,
-                    "date_of_birth":employer.date_of_birth,
+                    "date_of_birth": employer.date_of_birth,
                     "location_id": employer.location_id,
                 }
 
                 # Добавляем данные в таблицу employer
                 id = await uow.employers.add_one(data)
-                await self._send_email_registration(employer.email,employer.hashed_password)
+                await self._send_email_registration(employer.email, employer.hashed_password)
                 await uow.commit()
                 return id
             except Exception as e:
                 await uow.rollback()
-                print("Ошибка при регистрации",e)
+                print("Ошибка при регистрации", e)
 
     async def edit_employer(self, uow: IUnitOfWork, new_data: dict, id: int):
         async with uow:
@@ -150,7 +154,7 @@ class EmployerService:
             await uow.commit()
             return id
 
-    async def edit_password(self,uow: IUnitOfWork,old_password:str,new_password:str,user_id:int):
+    async def edit_password(self, uow: IUnitOfWork, old_password: str, new_password: str, user_id: int):
         hash_password = bcrypt_context.hash(old_password)
         async with uow:
             employer = await uow.employers.valid_employer(hashed_password=hash_password, user_id=user_id)
