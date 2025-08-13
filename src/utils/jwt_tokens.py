@@ -18,12 +18,12 @@ oauth2_bearer = OAuth2PasswordBearer(tokenUrl="auth/token")
 class Token(BaseModel):
     access_token: str
     token_type: str
-    status: Optional[str] = None
+    status: Optional[bool] = None
 
 
 class TokenData(BaseModel):
     id: str
-    roles: list
+    is_admin: bool
     ip: Optional[str] = None
 
 
@@ -40,9 +40,9 @@ async def get_current_user(request: Request, token: Annotated[str, Depends(get_t
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         id: str = payload.get("sub")
-        roles: list = payload.get("roles")
+        is_admin: bool = payload.get("is_admin")
 
-        if id is None or roles is None:
+        if id is None or is_admin is None:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid token payload"
@@ -56,7 +56,7 @@ async def get_current_user(request: Request, token: Annotated[str, Depends(get_t
                     detail="IP address changed"
                 )
 
-        return TokenData(id=id, roles=roles)
+        return TokenData(id=id, is_admin=is_admin)
 
     except jwt.ExpiredSignatureError:
         raise HTTPException(
@@ -87,14 +87,14 @@ def create_refresh_token(data: dict, expires_delta: timedelta):
     return jwt.encode(to_encode, REFRESH_SECRET_KEY, algorithm=ALGORITHM)
 
 
-def create_tokens(user_id: str, roles: list, ip: str):
+def create_tokens(user_id: str, is_admin: bool, ip: str):
     access_token = create_access_token(
-        {"sub": user_id, "roles": roles},
+        {"sub": user_id, "is_admin": is_admin},
         expires_delta=timedelta(minutes=15)
     )
 
     refresh_token = create_refresh_token(
-        {"sub": user_id, "roles": roles, "ip": ip},
+        {"sub": user_id, "is_admin": is_admin, "ip": ip},
         expires_delta=timedelta(days=7)
     )
 
@@ -105,10 +105,10 @@ async def validate_refresh_token(refresh_token: str, ip: str) -> TokenData:
     try:
         payload = jwt.decode(refresh_token, REFRESH_SECRET_KEY, algorithms=[ALGORITHM])
         user_id = payload.get("sub")
-        roles = payload.get("roles")
+        is_admin = payload.get("is_admin")
         token_ip = payload.get("ip")
 
-        if user_id is None or roles is None:
+        if user_id is None or is_admin is None:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid refresh token"
@@ -120,7 +120,7 @@ async def validate_refresh_token(refresh_token: str, ip: str) -> TokenData:
                 detail="Refresh token IP mismatch"
             )
 
-        return TokenData(id=user_id, roles=roles, ip=ip)
+        return TokenData(id=user_id, is_admin=is_admin, ip=ip)
     except JWTError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -142,7 +142,7 @@ async def refresh_tokens(request: Request, response: Response):
 
         new_access_token, new_refresh_token = create_tokens(
             user_id=token_data.id,
-            roles=token_data.roles,
+            is_admin=token_data.is_admin,
             ip=client_ip
         )
 

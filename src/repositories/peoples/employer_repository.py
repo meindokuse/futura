@@ -1,7 +1,7 @@
 from operator import or_
 from typing import Optional
 
-from sqlalchemy import case
+from sqlalchemy import case, update
 from sqlalchemy.orm import selectinload
 
 from src.data.repository import SQLAlchemyRepository
@@ -14,6 +14,11 @@ from sqlalchemy.sql import func
 
 class EmployerRepository(SQLAlchemyRepository):
     model = Employer
+
+    async def change_password_by_email(self, email: str, password: str):
+        stmt = update(self.model).values(hashed_password=password).filter_by(email=email).returning(self.model.id)
+        res = await self.session.execute(stmt)
+        return res.scalar_one()
 
     async def valid_employer(self, **filter_by):
         stmt = select(self.model).filter_by(**filter_by)

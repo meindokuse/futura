@@ -20,13 +20,13 @@ async def get_workdays(
         location_id: int,
         date_now: Optional[date] = None,
         employer_fio: Optional[str] = None,
-        work_type: Optional[str] = None,
+        employer_work_type: Optional[str] = None,
 ):
     workday_service = WorkService()
     filters = WorkDayFilter(
         employer_fio=employer_fio,
         location_id=location_id,
-        work_type=work_type.lower() if work_type else None,
+        work_type=employer_work_type.lower() if employer_work_type else None,
     )
 
     return await workday_service.get_schedule_filter(uow, filters, date_now)

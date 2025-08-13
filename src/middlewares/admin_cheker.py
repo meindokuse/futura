@@ -31,18 +31,14 @@ class AdminRoleMiddleware(BaseHTTPMiddleware):
         try:
             # Декодируем токен
             payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-            roles = payload.get("roles", [])
+            is_admin = payload.get("is_admin")
 
-            # Проверяем наличие хотя бы одной роли, начинающейся с "admin"
-            if not any(role.startswith('admin') for role in roles):
+            if not is_admin:
                 raise HTTPException(
                     status_code=403,
                     detail="Admin access required"
                 )
 
-            # Добавляем данные пользователя в request.state для использования в роутах
-            request.state.user_id = payload.get("sub")
-            request.state.roles = roles
 
         except JWTError:
             return JSONResponse(

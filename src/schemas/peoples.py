@@ -35,7 +35,7 @@ class ResidentUpdate(BaseModel):
 class EmployerCreate(BaseModel):
     email: str
     hashed_password: str
-    roles: List[str] = ["employee"]
+    is_admin: bool
     date_of_birth: date
     fio: str
     work_type: str
@@ -49,7 +49,7 @@ class EmployerRead(BaseModel):
     email: str
     hashed_password: str
     date_of_birth: date
-    roles: List[str]
+    is_admin: bool
     fio: str
     work_type: str
     contacts: Optional[List[str]]
@@ -64,7 +64,7 @@ class EmployerReadForValidate(BaseModel):
     id: int
     email: str
     hashed_password: str
-    roles: List[str]
+    is_admin: bool
     fio: str
 
     class Config:
@@ -82,7 +82,7 @@ class EmployerReadForCards(BaseModel):
     id: int
     fio: str
     work_type: str
-    roles: List[str]
+    is_admin: bool
 
 
 class EmployerUpdateAdmin(BaseModel):

@@ -1,8 +1,10 @@
 import random
+import secrets
 from datetime import timedelta, datetime
 from typing import Annotated
 
 import jwt
+import redis
 from fastapi import APIRouter, Response, HTTPException, Depends, Request, Response
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi_mail import FastMail, MessageSchema
@@ -12,7 +14,8 @@ from starlette.responses import JSONResponse
 from src.api.dependses import UOWDep
 from src.config import VERIFICATION_CODE_TTL
 from src.db.cache import get_redis
-from src.schemas.other_requests import EmailRequest, VerifyEmailRequest, PasswordRequest
+from src.schemas.other_requests import EmailRequest, VerifyEmailRequest, PasswordRequest, ResetPasswordRequest, \
+    NewPasswordRequest
 from src.schemas.peoples import EmployerCreate
 from src.services.employer_service import EmployerService
 from src.services.work_service import WorkService
@@ -22,6 +25,7 @@ from src.utils.jwt_tokens import create_access_token, user_dep, Token, create_to
 from jose import jwt, JWTError
 
 from src.utils.email_manager import EmailManager
+from src.utils.password_manager import PasswordManager
 
 router = APIRouter(
     tags=['auth'],
@@ -29,7 +33,7 @@ router = APIRouter(
 )
 
 
-@router.post('/token', response_model=Token)
+@router.post('/token')
 async def login_for_get_token(
         response: Response,
         request: Request,
@@ -40,15 +44,12 @@ async def login_for_get_token(
     # Аутентификация пользователя
     user = await EmployerService().authenticate(uow, form_data.username, form_data.password)
     if not user:
-        raise HTTPException(
-            status_code=401,
-            detail="Incorrect email or password"
-        )
+        return {'status': False}
 
     client_ip = request.client.host
     access_token, refresh_token = create_tokens(
         user_id=str(user.id),
-        roles=user.roles,
+        is_admin=user.is_admin,
         ip=client_ip
     )
 
@@ -74,7 +75,7 @@ async def login_for_get_token(
     return {
         "access_token": access_token,  # Теперь возвращаем токен и в теле ответа
         "token_type": "bearer",
-        "status": "success"
+        "status": True
     }
 
 
@@ -106,12 +107,12 @@ async def check_admin(request: Request):
         )
 
     payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-    roles = payload.get("roles", [])
+    is_admin = payload.get("is_admin")
 
     # Проверяем наличие хотя бы одной роли, начинающейся с "admin"
-    if not any(role.startswith('admin') for role in roles):
+    if not is_admin:
         raise HTTPException(
-            status_code=401,
+            status_code=400,
             detail="Admin access required"
         )
     return JSONResponse(
@@ -161,6 +162,7 @@ async def verify_email(
 
     return {"message": "Email успешно изменен"}
 
+
 @router.post('/change-password')
 async def change_password(
         request: PasswordRequest,
@@ -168,16 +170,27 @@ async def change_password(
         uow: UOWDep,
 ):
     employer_service = EmployerService()
+    success = await employer_service.edit_password(
+        uow,
+        request.current_password,
+        request.new_password,
+        int(user.id)
+    )
 
-    await employer_service.edit_password(uow, request.current_password,request.new_password, int(user.id))
+    if not success:
+        raise HTTPException(
+            status_code=400,
+            detail="Неверный текущий пароль"
+        )
 
-    return {"message": "Email успешно изменен"}
-
+    return {"status": "success", "message": "Пароль успешно изменен"}
 
 
 @router.post('/admin/register')
 async def register(new_user: EmployerCreate, uow: UOWDep):
+    print('пришла рега')
     id = await EmployerService().add_employer(uow, new_user)
+    print('заврешена рега')
     return {
         'status': 'success',
         'id': id
@@ -189,3 +202,38 @@ async def logout(response: Response):
     response.delete_cookie('access_token')
     response.delete_cookie('refresh_token')
     return {"message": "Logged out successfully"}
+
+
+@router.post("/request-password-reset")
+async def request_reset_link(
+        uow: UOWDep,
+        request: Request,
+        data: ResetPasswordRequest,
+        redis: Redis = Depends(get_redis),
+):
+    is_valid = await EmployerService().validate_email(data.email, uow)
+    if not is_valid:
+        raise HTTPException(status_code=404, detail="Email is not registered")
+
+    password_manager = PasswordManager(redis)
+    await password_manager.save_code_and_send(request, data.email)
+    return {'status': 'success'}
+
+
+@router.get("/verify-reset-token")
+async def verify_reset_token(token: str, redis: Redis = Depends(get_redis)):
+    password_manager = PasswordManager(redis)
+    return await password_manager.verify_reset_token(token)
+
+
+@router.post("/reset-password")
+async def reset_password(
+        uow: UOWDep,
+        data: NewPasswordRequest,
+        redis: Redis = Depends(get_redis),
+):
+    password_manager = PasswordManager(redis)
+    email = await password_manager.clear_redis(data.token)
+
+    employer_service = EmployerService()
+    await employer_service.edit_password_after_validate(uow, data.new_password, email)

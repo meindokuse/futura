@@ -16,7 +16,7 @@ class Employer(Base):
     email: Mapped[str] = mapped_column(String, unique=True, nullable=False)
     hashed_password: Mapped[str] = mapped_column(String, nullable=False)
     date_of_birth: Mapped[date] = mapped_column(Date, nullable=True)
-    roles: Mapped[List[str]] = mapped_column(JSON, default=["employee"])
+    is_admin: Mapped[bool] = mapped_column(Boolean, default=False, nullable=True)
     fio: Mapped[str] = mapped_column(String, nullable=False, unique=True)
     work_type: Mapped[str] = mapped_column(String, nullable=False)
     contacts: Mapped[Optional[List[str]]] = mapped_column(JSON, nullable=True)
@@ -33,7 +33,7 @@ class Employer(Base):
             date_of_birth=self.date_of_birth,
             email=self.email,
             fio=self.fio,
-            roles=self.roles,
+            is_admin=self.is_admin,
             work_type=self.work_type,
             contacts=self.contacts,
             description=self.description,
@@ -53,7 +53,7 @@ class Employer(Base):
             id=self.id,
             fio=self.fio,
             work_type=self.work_type,
-            roles = self.roles
+            is_admin=self.is_admin
         )
 
     def to_read_model_for_validate(self) -> EmployerReadForValidate:
@@ -61,7 +61,7 @@ class Employer(Base):
             id=self.id,
             email=self.email,
             hashed_password=self.hashed_password,
-            roles=self.roles,
+            is_admin=self.is_admin,
             fio=self.fio,
         )
 
@@ -80,4 +80,3 @@ class Residents(Base):
             discount_value=self.discount_value,
             description=self.description,
         )
-

@@ -7,7 +7,10 @@ from src.utils.jwt_tokens import ALGORITHM, SECRET_KEY
 
 
 class TokenValidationMiddleware(BaseHTTPMiddleware):
-    excluded_paths = {'/auth/token', '/auth/refresh', '/auth/logout', '/docs', '/favicon.ico','/openapi.json'}
+    excluded_paths = {'/auth/token', '/auth/refresh', '/auth/logout',
+                      '/docs', '/favicon.ico', '/openapi.json','/auth/request-password-reset',
+                      '/auth/verify-reset-token', '/auth/reset-password'
+                      }
 
     async def dispatch(self, request: Request, call_next):
         # Пропускаем исключенные пути
@@ -28,9 +31,8 @@ class TokenValidationMiddleware(BaseHTTPMiddleware):
             # Декодируем и валидируем токен
             payload = jwt.decode(access_token, SECRET_KEY, algorithms=[ALGORITHM])
             user_id = payload.get("sub")
-            roles = payload.get("roles")
 
-            if not user_id or not roles:
+            if not user_id:
                 raise HTTPException(
                     status_code=401,
                     detail="Invalid token payload"
@@ -44,10 +46,6 @@ class TokenValidationMiddleware(BaseHTTPMiddleware):
                         status_code=401,
                         detail="IP address changed"
                     )
-
-            # Добавляем данные пользователя в request.state для использования в роутах
-            request.state.user_id = user_id
-            request.state.roles = roles
 
             return await call_next(request)
 

@@ -73,14 +73,22 @@ class EmployerService:
             )
             return list_employers
 
-    async def get_employers_by_work_type(self, work_type: str, uow: IUnitOfWork,fio:Optional[str]=None):
+    async def get_employers_by_work_type(self, work_type: str, uow: IUnitOfWork, fio: Optional[str] = None):
         async with uow:
-            return await uow.employers.get_employer_by_work_type(work_type,fio)
+            return await uow.employers.get_employer_by_work_type(work_type, fio)
 
     async def get_current_employer(self, uow: IUnitOfWork, id: int):
         async with uow:
             employer = await uow.employers.get_current_employer(id=id)
         return employer
+
+    async def validate_email(self, email: str, uow: IUnitOfWork):
+        async with uow:
+            employer = await uow.employers.valid_employer(email=email)
+            print(employer)
+            if not employer:
+                return False
+            return True
 
     async def authenticate(self, uow: IUnitOfWork, email: str, password: str):
         async with uow:
@@ -117,9 +125,11 @@ class EmployerService:
                 if_exist_email = await uow.employers.valid_employer(email=employer.email)
                 if if_exist_email:
                     raise HTTPException(status_code=409, detail='Email already registered')
+                print('начал хеш')
 
                 # Хэшируем пароль
                 hash_password = bcrypt_context.hash(employer.hashed_password)
+                print('закончил хеш')
 
                 # Преобразуем данные в формат, совместимый с моделью Employer
                 data = {
@@ -136,6 +146,8 @@ class EmployerService:
 
                 # Добавляем данные в таблицу employer
                 id = await uow.employers.add_one(data)
+                print('закончил добавление')
+
                 await self._send_email_registration(employer.email, employer.hashed_password)
                 await uow.commit()
                 return id
@@ -155,14 +167,23 @@ class EmployerService:
             return id
 
     async def edit_password(self, uow: IUnitOfWork, old_password: str, new_password: str, user_id: int):
-        hash_password = bcrypt_context.hash(old_password)
         async with uow:
-            employer = await uow.employers.valid_employer(hashed_password=hash_password, user_id=user_id)
+            employer = await uow.employers.valid_employer(id=user_id)
             if not employer:
-                raise HTTPException(status_code=401, detail='Not autentificated')
+                return False
+            if not bcrypt_context.verify(old_password, employer.hashed_password):
+                return False
             hash_password = bcrypt_context.hash(new_password)
-            id = await uow.employers.edit_one(id=user_id, data={'hashed_password': hash_password})
-            return id
+            await uow.employers.edit_one(id=user_id, data={'hashed_password': hash_password})
+            await uow.commit()
+            return True
+
+    async def edit_password_after_validate(self, uow: IUnitOfWork, new_password: str, email: str):
+        async with uow:
+            hash_password = bcrypt_context.hash(new_password)
+            await uow.employers.change_password_by_email(email=email, password=hash_password)
+            await uow.commit()
+            return True
 
     async def delete_employer(self, uow: IUnitOfWork, id: int):
         async with uow:

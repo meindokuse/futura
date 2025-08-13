@@ -109,6 +109,8 @@ class WorkRepository(SQLAlchemyRepository):
             stmt = stmt.where(Employer.fio.ilike(f"%{filters.employer_fio}%"))
         if filters.location_id:
             stmt = stmt.where(WorkDay.location_id == filters.location_id)
+        if filters.work_type:
+            stmt = stmt.where(Employer.work_type == filters.work_type)
 
 
 
