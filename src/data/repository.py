@@ -6,7 +6,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.dialects.postgresql import insert  # Импортируем insert из диалекта PostgreSQL
 
 
-
 class AbstractRepository(ABC):
     @abstractmethod
     async def add_one(self, data: dict):
@@ -23,8 +22,8 @@ class SQLAlchemyRepository(AbstractRepository):
     def __init__(self, session: AsyncSession):
         self.session = session
 
-
-    async def add_all(self, data_list: List[dict], on_conflict_update: bool = False, conflict_fields: List[str] = None) -> List[int]:
+    async def add_all(self, data_list: List[dict], on_conflict_update: bool = False,
+                      conflict_fields: List[str] = None) -> List[int]:
         """
         Добавляет несколько записей в базу данных.
         :param conflict_fields:
@@ -99,7 +98,6 @@ class SQLAlchemyRepository(AbstractRepository):
             res = [row[0].to_read_model() for row in res.all()]
             return res
 
-
     async def find_one(self, **filter_by):
         stmt = select(self.model).filter_by(**filter_by)
         res = await self.session.execute(stmt)
@@ -108,9 +106,6 @@ class SQLAlchemyRepository(AbstractRepository):
             return res.to_read_model()
         return None
 
-    async def delete_one(self,**filter_by):
+    async def delete_one(self, **filter_by):
         stmt = delete(self.model).filter_by(**filter_by)
         await self.session.execute(stmt)
-
-
-
