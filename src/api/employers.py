@@ -29,6 +29,7 @@ async def list_employers(
 
     if work_type:
         filter_by["work_type"] = work_type.lower()
+        print('work_type', work_type)
 
     employer_service = EmployerService()
     employers = await employer_service.get_list_employers(
@@ -73,6 +74,7 @@ async def edit_employer(employer_id: int, new_data: EmployerUpdateAdmin, uow: UO
     return {
         "status": "ok"
     }
+
 
 @router.get('/get_list_birth')
 async def get_list_birth(uow: UOWDep, page: int, limit: int):

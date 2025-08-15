@@ -116,44 +116,60 @@ class EmployerService:
     async def add_employer(self, uow: IUnitOfWork, employer: EmployerCreate):
         async with uow:
             try:
-                # Проверяем, существует ли уже работник с таким ФИО
+                # Проверка существующего ФИО
                 is_exist_fio = await uow.employers.valid_employer(fio=employer.fio)
                 if is_exist_fio:
                     raise HTTPException(status_code=409, detail='Name already registered')
 
-                # Проверяем, существует ли уже работник с таким email
+                # Проверка существующего email
                 if_exist_email = await uow.employers.valid_employer(email=employer.email)
                 if if_exist_email:
                     raise HTTPException(status_code=409, detail='Email already registered')
-                print('начал хеш')
 
-                # Хэшируем пароль
+                # Хэширование пароля
                 hash_password = bcrypt_context.hash(employer.hashed_password)
-                print('закончил хеш')
 
-                # Преобразуем данные в формат, совместимый с моделью Employer
+                # Подготовка данных
                 data = {
                     "email": employer.email,
                     "fio": employer.fio.lower(),
                     "work_type": employer.work_type.lower(),
-                    "roles": employer.roles,  # JSON автоматически сериализуется
-                    "contacts": employer.contacts,  # JSON автоматически сериализуется
+                    "is_admin": employer.is_admin,
+                    "contacts": employer.contacts,
                     "description": employer.description,
                     "hashed_password": hash_password,
                     "date_of_birth": employer.date_of_birth,
                     "location_id": employer.location_id,
                 }
 
-                # Добавляем данные в таблицу employer
+                # Добавление работника
                 id = await uow.employers.add_one(data)
-                print('закончил добавление')
 
-                await self._send_email_registration(employer.email, employer.hashed_password)
+                try:
+                    await self._send_email_registration(employer.email, employer.hashed_password)
+                except Exception:
+                    print('почта ошибка')
+                    await uow.rollback()
+                    raise HTTPException(
+                        status_code=503,  # Service Unavailable
+                        detail="Не удалось отправить письмо с данными для входа."
+                    )
                 await uow.commit()
                 return id
+
+
+            except HTTPException:
+                raise
+
             except Exception as e:
+                # Все остальные ошибки - возвращаем 500
                 await uow.rollback()
-                print("Ошибка при регистрации", e)
+                print(f"Ошибка при регистрации: {e}")
+                raise HTTPException(
+                    status_code=500,
+                    detail="Internal server error during registration"
+                )
+
 
     async def edit_employer(self, uow: IUnitOfWork, new_data: dict, id: int):
         async with uow:
