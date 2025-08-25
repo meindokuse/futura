@@ -3,6 +3,9 @@ from typing import Optional
 from fastapi import APIRouter
 
 from src.api.dependses import UOWDep
+from src.models.items import LogType, LogAction
+from src.schemas.logs import LogsCreate
+from src.schemas.other_requests import DeleteRequest
 from src.schemas.peoples import EmployerCreate, EmployerRead, EmployerUpdateAdmin, EmployerUpdateBasic
 from src.services.employer_service import EmployerService
 from src.utils.jwt_tokens import user_dep
@@ -68,9 +71,9 @@ async def edit_employer(uow: UOWDep, user: user_dep, new_data: EmployerUpdateBas
 
 
 @router.put('/admin/edit_employer')
-async def edit_employer(employer_id: int, new_data: EmployerUpdateAdmin, uow: UOWDep):
+async def edit_employer(employer_id: int, new_data: EmployerUpdateAdmin, uow: UOWDep, user: user_dep):
     new_data_dict = new_data.model_dump()
-    await EmployerService().edit_employer(uow, new_data_dict, employer_id)
+    await EmployerService().edit_employer(uow, new_data_dict, employer_id, int(user.id))
     return {
         "status": "ok"
     }
@@ -83,8 +86,8 @@ async def get_list_birth(uow: UOWDep, page: int, limit: int):
 
 
 @router.delete('/admin/delete_employer')
-async def delete_employer(employer_id: int, uow: UOWDep):
-    await EmployerService().delete_employer(uow, employer_id)
+async def delete_employer(employer_id: int, uow: UOWDep, user: user_dep):
+    await EmployerService().delete_employer(uow, employer_id, int(user.id))
     return {
         "status": "ok"
     }

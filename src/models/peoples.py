@@ -7,7 +7,7 @@ from sqlalchemy.types import Integer, String, Boolean, JSON
 from src.models.items import Location
 from src.db.database import Base
 from src.schemas.peoples import EmployerRead, ResidentRead, EmployerReadForBirth, EmployerReadForCards, \
-    EmployerReadForValidate, ResidentReadForCards
+    EmployerReadForValidate, ResidentReadForCards, EmployerReadLogs
 
 
 class Employer(Base):
@@ -63,6 +63,15 @@ class Employer(Base):
             hashed_password=self.hashed_password,
             is_admin=self.is_admin,
             fio=self.fio,
+        )
+
+    def for_logs_read(self) -> "EmployerReadLogs":
+        return EmployerReadLogs(
+            id=self.id,
+            fio=self.fio,
+            work_type=self.work_type,
+            is_admin=self.is_admin,
+            location_id=self.location_id
         )
 
 

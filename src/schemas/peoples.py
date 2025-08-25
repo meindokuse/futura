@@ -20,6 +20,8 @@ class ResidentRead(BaseModel):
         orm_mode = True
 
 
+
+
 class ResidentReadForCards(BaseModel):
     id: int
     fio: str
@@ -34,7 +36,6 @@ class ResidentUpdate(BaseModel):
 
 class EmployerCreate(BaseModel):
     email: str
-    hashed_password: str
     is_admin: bool
     date_of_birth: date
     fio: str
@@ -84,13 +85,17 @@ class EmployerReadForCards(BaseModel):
     work_type: str
     is_admin: bool
 
+class EmployerReadLogs(BaseModel):
+    id: int
+    fio: str
+    work_type: str
+    is_admin: bool
+    location_id: int
+
 
 class EmployerUpdateAdmin(BaseModel):
-    roles: Optional[List[str]] = None
-    fio: Optional[str] = None
+    is_admin: Optional[bool] = None
     work_type: Optional[str] = None
-    contacts: Optional[List[str]] = None
-    description: Optional[str] = None
     location_id: Optional[int] = None
 
 class EmployerUpdateBasic(BaseModel):

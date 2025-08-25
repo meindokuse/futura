@@ -8,15 +8,16 @@ from src.api.events import router as event_router
 from src.api.card import router as product_router
 from src.api.residents import router as residents_router
 from src.api.locations import router as location_router
+from src.api.logs import router as logs_router
 from src.api.files import router as files_router
+from src.db.async_cache import init_redis, close_redis
 from src.middlewares.token_validator import TokenValidationMiddleware
 from src.middlewares.admin_cheker import AdminRoleMiddleware
 app = FastAPI()
 
 
-
-app.add_middleware(TokenValidationMiddleware)
 app.add_middleware(AdminRoleMiddleware)
+app.add_middleware(TokenValidationMiddleware)
 
 app.add_middleware(
     CORSMiddleware,
@@ -36,6 +37,16 @@ app.include_router(residents_router)
 app.include_router(location_router)
 
 app.include_router(files_router)
+
+app.include_router(logs_router)
+
+@app.on_event("startup")
+async def startup_event():
+    await init_redis()
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    await close_redis()
 
 @app.get("/favicon.ico")
 async def favicon():

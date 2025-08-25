@@ -1,3 +1,4 @@
+import uuid
 from datetime import date, datetime
 from typing import Optional
 
@@ -5,6 +6,8 @@ from fastapi import HTTPException
 from fastapi_mail import MessageSchema, FastMail
 
 from src.data.unitofwork import IUnitOfWork
+from src.logs.loggers.employee_logger import EmployeeLogger
+from src.schemas.logs import LogsCreate
 from src.schemas.peoples import EmployerCreate, EmployerUpdateAdmin
 from src.smtp_config import mail_conf
 from src.utils.jwt_tokens import bcrypt_context
@@ -113,7 +116,7 @@ class EmployerService:
             return list_of_birth
 
     # ДЛЯ АДМИНА
-    async def add_employer(self, uow: IUnitOfWork, employer: EmployerCreate):
+    async def add_employer(self, uow: IUnitOfWork, employer: EmployerCreate, admin_id: int):
         async with uow:
             try:
                 # Проверка существующего ФИО
@@ -126,8 +129,9 @@ class EmployerService:
                 if if_exist_email:
                     raise HTTPException(status_code=409, detail='Email already registered')
 
-                # Хэширование пароля
-                hash_password = bcrypt_context.hash(employer.hashed_password)
+                generated_password = uuid.uuid4().hex[:8]
+
+                hash_password = bcrypt_context.hash(generated_password)
 
                 # Подготовка данных
                 data = {
@@ -144,11 +148,12 @@ class EmployerService:
 
                 # Добавление работника
                 id = await uow.employers.add_one(data)
+                await EmployeeLogger(admin_id, uow).log_for_create(employer)
 
                 try:
-                    await self._send_email_registration(employer.email, employer.hashed_password)
-                except Exception:
-                    print('почта ошибка')
+                    await self._send_email_registration(employer.email, generated_password)
+                except Exception as e:
+                    print('почта ошибка', e)
                     await uow.rollback()
                     raise HTTPException(
                         status_code=503,  # Service Unavailable
@@ -170,9 +175,9 @@ class EmployerService:
                     detail="Internal server error during registration"
                 )
 
-
-    async def edit_employer(self, uow: IUnitOfWork, new_data: dict, id: int):
+    async def edit_employer(self, uow: IUnitOfWork, new_data: dict, id: int, admin_id: int):
         async with uow:
+            await EmployeeLogger(admin_id, uow).log_for_update(id, new_data)
             await uow.employers.edit_one(id=id, data=new_data)
             await uow.commit()
 
@@ -201,7 +206,8 @@ class EmployerService:
             await uow.commit()
             return True
 
-    async def delete_employer(self, uow: IUnitOfWork, id: int):
+    async def delete_employer(self, uow: IUnitOfWork, id: int, admin_id: int):
         async with uow:
+            await EmployeeLogger(admin_id, uow).log_for_delete(id)
             await uow.employers.delete_one(id=id)
             await uow.commit()

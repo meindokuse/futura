@@ -1,4 +1,6 @@
 from src.data.unitofwork import IUnitOfWork
+from src.logs.loggers.resident_logger import ResidentLogger
+from src.schemas.logs import LogsCreate
 from src.schemas.peoples import ResidentCreate, ResidentUpdate
 
 
@@ -20,21 +22,25 @@ class ResidentsService:
             return resident
 
     # ДЛЯ АДМИНА
-    async def add_resident(self, uow: IUnitOfWork, resident: ResidentCreate):
+    async def add_resident(self, uow: IUnitOfWork, resident: ResidentCreate, admin_id: int):
         dict_resident = resident.model_dump()
         async with uow:
+            await ResidentLogger(admin_id, uow).log_for_create(resident)
             id = await uow.residents.add_one(data=dict_resident)
             await uow.commit()
             return id
 
-    async def delete_resident(self, uow: IUnitOfWork, id: int):
+    async def delete_resident(self, uow: IUnitOfWork, id: int,admin_id: int):
         async with uow:
+            await ResidentLogger(admin_id, uow).log_for_delete(id)
+
             await uow.residents.delete_one(id=id)
             await uow.commit()
 
-    async def update_resident(self,uow: IUnitOfWork, resident: ResidentUpdate,id:int):
+    async def update_resident(self, uow: IUnitOfWork, resident: ResidentUpdate, id: int,admin_id: int):
         dict_resident = resident.model_dump()
         async with uow:
+            await ResidentLogger(admin_id, uow).log_for_update(id,resident)
             await uow.residents.edit_one(id=id, data=dict_resident)
             await uow.commit()
             return id

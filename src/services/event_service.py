@@ -1,7 +1,11 @@
 import datetime
 
 from src.data.unitofwork import IUnitOfWork
-from src.schemas.items import EventCreate, EventFilter, EventsUpdate
+from src.logs.loggers.event_logger import EventLogger
+from src.schemas.items import EventCreate, EventFilter, EventUpdate
+from src.schemas.logs import LogsCreate
+from src.utils.log_decorator import log_action
+from src.utils.log_enum import LogType, LogAction
 
 
 class EventService:
@@ -33,20 +37,23 @@ class EventService:
             event = await uow.event.get_latest_event()
             return event
 
-    async def add_event(self, uow: IUnitOfWork, event: EventCreate):
+    async def add_event(self, uow: IUnitOfWork, event: EventCreate, admin_id: int):
         data = event.model_dump()
         async with uow:
+            await EventLogger(admin_id, uow).log_for_create(event)
             id = await uow.event.add_one(data)
             await uow.commit()
             return id
 
-    async def delete_event(self, uow: IUnitOfWork, id: int):
+    async def delete_event(self, uow: IUnitOfWork, id: int, admin_id: int):
         async with uow:
+            await EventLogger(admin_id, uow).log_for_delete(id)
             await uow.event.delete_one(id=id)
             await uow.commit()
 
-    async def update_event(self, uow: IUnitOfWork, id: int, event: EventsUpdate):
+    async def update_event(self, uow: IUnitOfWork, id: int, event: EventUpdate,admin_id: int):
         data = event.model_dump()
         async with uow:
-            await uow.event.update_event(data,id)
+            await EventLogger(admin_id, uow).log_for_update(id,event)
+            await uow.event.update_event(data, id)
             await uow.commit()

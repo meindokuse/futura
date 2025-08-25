@@ -4,8 +4,13 @@ from fastapi import APIRouter
 from src.api.dependses import UOWDep
 from datetime import date
 
-from src.schemas.items import EventCreate, EventFilter, EventsUpdate
+from src.celery.tasks.bot_send_task import bot_send_task
+from src.models.items import LogType, LogAction
+from src.schemas.items import EventCreate, EventFilter, EventUpdate
+from src.schemas.logs import LogsCreate
+from src.schemas.other_requests import DeleteRequest
 from src.services.event_service import EventService
+from src.utils.jwt_tokens import user_dep
 from src.utils.message_manager import MessageManager
 import asyncio
 
@@ -83,15 +88,16 @@ async def get_latest(
 @router.post("/admin/create_event")
 async def create_event(
         event: EventCreate,
-        uow: UOWDep
+        uow: UOWDep,
+        user: user_dep
 ):
     events_service = EventService()
-    id = await events_service.add_event(uow, event)
+    id = await events_service.add_event(uow, event, int(user.id))
     if id:
         start = event.date_start.strftime("%d/%m/%Y, %H:%M")
         text = f'Анонсировано новое событие!\n{event.name}\nНачало: {start}\nПолная информация на нашем сайте.'
         print(f"Текст для отправки: {text}")
-        asyncio.create_task(MessageManager.send_message_to_bot(text=text))
+        bot_send_task.delay(text)
 
     return {
         "status": "success",
@@ -101,10 +107,11 @@ async def create_event(
 @router.delete("/admin/delete_event")
 async def delete_event(
         id: int,
+        user: user_dep,
         uow: UOWDep
 ):
     events_service = EventService()
-    await events_service.delete_event(uow, id)
+    await events_service.delete_event(uow, id, int(user.id))
     return {
         "status": "success",
     }
@@ -113,11 +120,12 @@ async def delete_event(
 @router.put("/admin/update_event")
 async def update_event(
         id: int,
-        event: EventsUpdate,
+        event: EventUpdate,
+        user: user_dep,
         uow: UOWDep
 ):
     events_service = EventService()
-    await events_service.update_event(uow, id, event)
+    await events_service.update_event(uow, id, event, int(user.id))
     return {
         "status": "success",
     }

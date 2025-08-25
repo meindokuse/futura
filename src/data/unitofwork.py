@@ -5,6 +5,7 @@ from src.db.database import async_session_maker
 from src.repositories.items.event_repository import EventRepository
 from src.repositories.items.location_repository import LocationRepository
 from src.repositories.items.card_repository import CardRepository
+from src.repositories.items.logs_repository import LogsRepository
 from src.repositories.peoples.employer_repository import EmployerRepository
 from src.repositories.peoples.residents_repository import ResidentsRepository
 from src.repositories.items.work_repository import WorkRepository
@@ -19,6 +20,7 @@ class IUnitOfWork(ABC):
     card: CardRepository
     event: EventRepository
     location: LocationRepository
+    logs: LogsRepository
 
     @abstractmethod
     def __init__(self):
@@ -54,7 +56,7 @@ class UnitOfWork(IUnitOfWork):
         self.card = CardRepository(self.session)
         self.event = EventRepository(self.session)
         self.location = LocationRepository(self.session)
-
+        self.logs = LogsRepository(self.session)
         return self
 
     async def __aexit__(self, *args):

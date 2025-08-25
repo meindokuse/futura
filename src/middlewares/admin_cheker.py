@@ -2,7 +2,7 @@ import jwt
 from starlette.middleware.base import BaseHTTPMiddleware
 from fastapi import Request, HTTPException
 from fastapi.responses import RedirectResponse
-from src.utils.jwt_tokens import SECRET_KEY, ALGORITHM
+from src.utils.jwt_tokens import SECRET_KEY, ALGORITHM, get_token_from_cookie
 
 from fastapi import Request, HTTPException
 from fastapi.responses import RedirectResponse, JSONResponse
@@ -18,10 +18,10 @@ class AdminRoleMiddleware(BaseHTTPMiddleware):
             return await call_next(request)
 
         # Получаем токен из кук (или заголовков)
-        token = request.cookies.get("access_token") or \
-                (request.headers.get("Authorization") and request.headers["Authorization"][7:])
+        token = await get_token_from_cookie(request)
 
         if not token:
+            print('тут')
             return JSONResponse(
                 status_code=401,
                 content={"detail": "Authentication required"},
@@ -41,6 +41,7 @@ class AdminRoleMiddleware(BaseHTTPMiddleware):
 
 
         except JWTError:
+            print('или тут')
             return JSONResponse(
                 status_code=401,
                 content={"detail": "Invalid or expired token"},

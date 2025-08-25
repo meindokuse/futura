@@ -97,6 +97,16 @@ class EmployerRepository(SQLAlchemyRepository):
         res = res.scalar_one_or_none()
         return res.to_read_model()
 
+    async def get_employee_for_logs(self,id:int):
+        stmt = (
+            select(self.model)
+            .where(self.model.id == id)
+        )
+
+        res = await self.session.execute(stmt)
+        res = res.scalar_one_or_none()
+        return res.for_logs_read()
+
     async def get_employer_by_work_type(self, work_type: str, fio: Optional[str] = None):
         stmt = select(Employer)
         if work_type == 'хостес':
@@ -187,3 +197,6 @@ class EmployerRepository(SQLAlchemyRepository):
         res = await self.session.execute(stmt)
         res = [row[0].to_read_model_for_birth() for row in res.all()]
         return res
+
+
+

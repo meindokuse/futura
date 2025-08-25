@@ -20,7 +20,23 @@ class CardRead(BaseModel):
     location_id: Optional[int]
 
 
+class CardUpdate(BaseModel):
+    id: int
+    title: str
+    description: str
+    exp: str
+    location_id: Optional[int]
+
+
 class EventCreate(BaseModel):
+    name: str
+    date_start: datetime
+    description: str
+    location_id: Optional[int] = None
+
+
+class EventReadLogs(BaseModel):
+    id:int
     name: str
     date_start: datetime
     description: str
@@ -45,17 +61,18 @@ class EventReadMain(BaseModel):
     description: str
 
 
-class EventsUpdate(BaseModel):
+class EventUpdate(BaseModel):
     name: Optional[str] = None
     date_start: Optional[datetime] = None
     description: Optional[str] = None
     location_id: Optional[int] = None
 
+
 class WorkDayRead(BaseModel):
     id: int
     work_date: date
     employer_fio: str  # ФИО из таблицы Employer
-    employer_id:int
+    employer_id: int
     employer_work_type: str  # Должность из Employer (work_type)
     number_work: int
 
@@ -69,6 +86,15 @@ class WorkDayRead(BaseModel):
             if isinstance(value, (datetime, time)):  # Если значение — это datetime или time
                 data[key] = value.isoformat()  # Преобразуем в строку в формате ISO
         return data
+
+
+class WorkDayLogsRead(BaseModel):
+    id: int
+    work_date: date
+    employer_fio: str
+    location_id: int
+    number_work: int
+
 
 class WorkDayProfileRead(BaseModel):
     id: int
@@ -99,15 +125,14 @@ class LocationUpdate(BaseModel):
     description: Optional[str] = None
 
 
-
 # ПРИВАТНАЯ СХЕМА
 
 class WorkDayFilter(BaseModel):
     employer_fio: Optional[str] = None
     location_id: Optional[int] = None
     work_type: Optional[str] = None
-    page: int = 1
-    limit: int = 10
+    page: Optional[int] = None
+    limit: Optional[int] = None
 
 
 class EventFilter(BaseModel):
@@ -115,5 +140,3 @@ class EventFilter(BaseModel):
     page: int = 1
     location_id: Optional[int] = None
     limit: int = 10
-
-

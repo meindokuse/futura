@@ -28,6 +28,7 @@ class ResidentsRepository(SQLAlchemyRepository):
             stmt = (select(self.model))
 
         stmt = stmt.offset(start).limit(limit)
+        stmt = stmt.order_by(self.model.fio.asc())
 
         res = await self.session.execute(stmt)
         res = [row[0].to_read_model() for row in res.all()]

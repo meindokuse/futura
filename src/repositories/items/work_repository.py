@@ -1,6 +1,6 @@
 from datetime import date, datetime, timedelta
 from typing import List, cast, Optional
-from sqlalchemy import func, select, and_, Date, extract
+from sqlalchemy import func, select, and_, Date, extract, delete
 from sqlalchemy.orm import selectinload, joinedload
 from src.data.repository import SQLAlchemyRepository
 from src.models.items import WorkDay, Location
@@ -37,7 +37,18 @@ class WorkRepository(SQLAlchemyRepository):
         result = await self.session.execute(stmt)
         res_ready = [row[0].to_read_model() for row in result.all()]
         return res_ready
+    async def get_current_shift(self,id:int):
+        stmt = (
+            select(self.model)
+            .options(
+                selectinload(WorkDay.employer),  # Загружаем связанный Employer
+            )
+            .where(WorkDay.id == id)
+        )
 
+        result = await self.session.execute(stmt)
+        shift = result.scalars().first()
+        return shift.read_for_logs() if shift else None
     async def get_workdays(self, date_now: date, **filter_by):
         # Получаем год и месяц из date_now
         year = date_now.year
@@ -64,7 +75,7 @@ class WorkRepository(SQLAlchemyRepository):
         res_ready = [row[0].to_read_model() for row in result.all()]
         return res_ready
 
-    async def get_workdays_for_admin(self, date:date, location_id: int):
+    async def get_workdays_for_admin(self, date: date, location_id: int):
 
         stmt = (
             select(WorkDay)
@@ -91,12 +102,13 @@ class WorkRepository(SQLAlchemyRepository):
         first_day = date(year, month, 1)
         last_day = date(year, month + 1, 1) - timedelta(days=1) if month != 12 else date(year, 12, 31)
 
+        # Создаем базовый запрос с JOIN к employer
         stmt = (
             select(WorkDay)
-            .join(WorkDay.employer)  # Явное соединение с таблицей Employer
+            .join(WorkDay.employer)  # Добавляем JOIN к таблице employers
             .options(
-                joinedload(WorkDay.employer),
-                joinedload(WorkDay.location)
+                selectinload(WorkDay.employer),
+                selectinload(WorkDay.location)
             )
             .where(
                 WorkDay.work_date >= first_day,
@@ -112,10 +124,11 @@ class WorkRepository(SQLAlchemyRepository):
         if filters.work_type:
             stmt = stmt.where(Employer.work_type == filters.work_type)
 
-
-
-        # Сортировка по ФИО работника
+        # Сортировка по ФИО работника (теперь employer доступен через JOIN)
         stmt = stmt.order_by(Employer.fio.asc())
+
+        if filters.limit and filters.limit != 0:
+            stmt = stmt.offset(filters.page).limit(filters.limit)
 
         result = await self.session.execute(stmt)
         return [wd.to_read_model() for wd in result.scalars().all()]
@@ -129,3 +142,4 @@ class WorkRepository(SQLAlchemyRepository):
                           self.model.employer_id == user_id)
         result = await self.session.execute(stmt)
         return [wd.to_read_for_profile() for wd in result.scalars().all()]
+

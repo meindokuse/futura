@@ -1,6 +1,6 @@
 from typing import Optional
 
-from sqlalchemy import select
+from sqlalchemy import select, delete
 
 from src.data.repository import SQLAlchemyRepository
 from src.models.items import Card
@@ -19,7 +19,6 @@ class CardRepository(SQLAlchemyRepository):
         # Основной запрос для данных
         stmt = select(self.model).order_by(self.model.title.asc())
 
-
         if title:
             stmt = stmt.where(self.model.title.ilike(f'%{title}%'))
 
@@ -33,3 +32,8 @@ class CardRepository(SQLAlchemyRepository):
         cards_result = await self.session.execute(stmt)
         cards = cards_result.scalars().all()
         return [c.to_read_model() for c in cards] if cards else []
+
+    async def delete_card(self, **filter_by):
+        stmt = delete(self.model).filter_by(**filter_by).returning(self.model.title)
+        title = await self.session.execute(stmt)
+        return title

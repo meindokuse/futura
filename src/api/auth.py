@@ -13,7 +13,9 @@ from starlette.responses import JSONResponse
 
 from src.api.dependses import UOWDep
 from src.config import VERIFICATION_CODE_TTL
-from src.db.cache import get_redis
+from src.db.async_cache import get_redis
+from src.models.items import LogType, LogAction
+from src.schemas.logs import LogsCreate
 from src.schemas.other_requests import EmailRequest, VerifyEmailRequest, PasswordRequest, ResetPasswordRequest, \
     NewPasswordRequest
 from src.schemas.peoples import EmployerCreate
@@ -97,8 +99,7 @@ async def get_profile(user: user_dep, uow: UOWDep):
 
 @router.get('/check_admin')
 async def check_admin(request: Request):
-    token = request.cookies.get("access_token") or \
-            (request.headers.get("Authorization") and request.headers["Authorization"][7:])
+    token = request.cookies.get("access_token")
     if not token:
         return JSONResponse(
             status_code=401,
@@ -113,7 +114,7 @@ async def check_admin(request: Request):
     if not is_admin:
         raise HTTPException(
             status_code=400,
-            detail="Admin access required"
+            detail="Admin access denied"
         )
     return JSONResponse(
         status_code=200,
@@ -187,10 +188,8 @@ async def change_password(
 
 
 @router.post('/admin/register')
-async def register(new_user: EmployerCreate, uow: UOWDep):
-    print('пришла рега')
-    id = await EmployerService().add_employer(uow, new_user)
-    print('заврешена рега')
+async def register(new_user: EmployerCreate, uow: UOWDep, user: user_dep):
+    id = await EmployerService().add_employer(uow, new_user, int(user.id))
     return {
         'status': 'success',
         'id': id

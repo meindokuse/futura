@@ -5,9 +5,8 @@ from fastapi.security import OAuth2PasswordBearer
 from jose import jwt, JWTError
 from pydantic import BaseModel
 from passlib.context import CryptContext
+from src.config import SECRET_KEY, REFRESH_SECRET_KEY
 
-SECRET_KEY = "SECRET_KEY"
-REFRESH_SECRET_KEY = "REFRESH_SECRET_KEY"
 ALGORITHM = "HS256"
 REFRESH_TOKEN_COOKIE_NAME = "refresh_token"
 
@@ -27,17 +26,34 @@ class TokenData(BaseModel):
     ip: Optional[str] = None
 
 
-async def get_token_from_cookie(request: Request, access_token: str = Cookie(None)):
-    if not access_token:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Not authenticated"
-        )
-    return access_token
+async def get_token_from_cookie(request: Request):
+    # Сначала проверяем request.state
+    if hasattr(request.state, "access_token"):
+        print(f"Token from request.state: {request.state.access_token}")
+        return request.state.access_token
+
+    # Иначе парсим cookies
+    cookies = {}
+    cookie_header = request.headers.get("cookie", "")
+    if cookie_header:
+        try:
+            for cookie in cookie_header.split("; "):
+                if "=" in cookie:
+                    key, value = cookie.split("=", 1)
+                    cookies[key] = value
+        except ValueError:
+            raise HTTPException(status_code=401, detail="Invalid cookie format")
+
+    token = cookies.get("access_token")
+    if not token:
+        raise HTTPException(status_code=401, detail="Access token missing")
+    print(f"Token from cookies: {token}")
+    return token
 
 
-async def get_current_user(request: Request, token: Annotated[str, Depends(get_token_from_cookie)]):
+async def get_current_user(request: Request, token: str = Depends(get_token_from_cookie)):
     try:
+        print('get_current_user', token)
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         id: str = payload.get("sub")
         is_admin: bool = payload.get("is_admin")
@@ -48,22 +64,16 @@ async def get_current_user(request: Request, token: Annotated[str, Depends(get_t
                 detail="Invalid token payload"
             )
 
-        if payload.get("ip"):
-            client_ip = request.client.host
-            if payload.get("ip") != client_ip:
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="IP address changed"
-                )
-
         return TokenData(id=id, is_admin=is_admin)
 
     except jwt.ExpiredSignatureError:
+        print('в получении пользователя-ExpiredSignatureError')
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Token expired"
         )
     except jwt.InvalidTokenError:
+        print('в получении пользователя-InvalidTokenError')
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid token"
@@ -90,7 +100,7 @@ def create_refresh_token(data: dict, expires_delta: timedelta):
 def create_tokens(user_id: str, is_admin: bool, ip: str):
     access_token = create_access_token(
         {"sub": user_id, "is_admin": is_admin},
-        expires_delta=timedelta(minutes=15)
+        expires_delta=timedelta(minutes=1)
     )
 
     refresh_token = create_refresh_token(
@@ -146,28 +156,9 @@ async def refresh_tokens(request: Request, response: Response):
             ip=client_ip
         )
 
-        # Обновляем ОБА токена в куках
-        response.set_cookie(
-            key="access_token",
-            value=new_access_token,
-            httponly=True,
-            secure=False,
-            samesite="lax",
-            max_age=int(timedelta(minutes=15).total_seconds())
-        )
-
-        response.set_cookie(
-            key="refresh_token",
-            value=new_refresh_token,
-            httponly=True,
-            secure=False,
-            samesite="lax",
-            max_age=int(timedelta(days=7).total_seconds())
-        )
-
         return {
             "access_token": new_access_token,
-            "token_type": "bearer"
+            "refresh_token": new_refresh_token
         }
 
     except Exception as e:
